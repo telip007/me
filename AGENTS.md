@@ -28,8 +28,8 @@ Run `npm run build` after changing source content, templates, styles, or config.
 
 - GitHub Pages deployment is configured in `.github/workflows/pages.yml`.
 - Pushes to `main` build the site and deploy the generated `dist/` artifact.
-- The repository is published as a GitHub Pages project site at `https://telip007.github.io/me`.
-- Keep `src/config.json` `siteUrl` and `basePath` in sync. For this repo, `basePath` should remain `/me` unless moving to a custom domain.
+- The repository is published with the GitHub Pages custom domain `goeksu.me`.
+- Keep `src/config.json` `siteUrl` and `basePath` in sync. With the custom domain, `basePath` should remain empty. Use `/me` only if the site is moved back to `https://telip007.github.io/me`.
 
 ## Repository structure
 
