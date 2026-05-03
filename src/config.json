@@ -2,7 +2,8 @@
   "siteTitle": "Talip Göksu",
   "siteSubtitle": "Software engineering, leadership, and careful building.",
   "siteDescription": "Notes from a software engineer and team lead on mobile, web, backend, and the craft of making builders faster.",
-  "siteUrl": "https://example.com",
+  "siteUrl": "https://telip007.github.io/me",
+  "basePath": "/me",
   "author": "Talip Göksu",
   "twitterHandle": "",
   "language": "en"

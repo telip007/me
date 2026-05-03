@@ -7,6 +7,7 @@ import MarkdownIt from 'markdown-it';
 const CONFIG_PATH = path.join(process.cwd(), 'src', 'config.json');
 const SRC_POST_DIR = path.join(process.cwd(), 'src', 'posts');
 const SRC_STYLE = path.join(process.cwd(), 'src', 'styles.css');
+const SRC_FAVICON = path.join(process.cwd(), 'src', 'favicon.svg');
 const SRC_ABOUT = path.join(process.cwd(), 'src', 'about.md');
 const DIST_DIR = path.join(process.cwd(), 'dist');
 
@@ -24,6 +25,17 @@ function ensureAbs(base, rel) {
 
 function siteRoot(config) {
   return config.siteUrl.replace(/\/$/, '');
+}
+
+function normalizeBasePath(value = '') {
+  const trimmed = String(value).trim();
+  if (!trimmed || trimmed === '/') return '';
+  return `/${trimmed.replace(/^\/+|\/+$/g, '')}`;
+}
+
+function withBase(config, rel) {
+  const pathName = rel.startsWith('/') ? rel : `/${rel}`;
+  return `${config.assetsBase}${pathName}`;
 }
 
 function formatDate(value) {
@@ -136,7 +148,7 @@ function renderJsonLdPost({ post, siteUrl, siteName, author, canonicalUrl }) {
   `;
 }
 
-function postListMarkup(posts, sectionTitle) {
+function postListMarkup(posts, sectionTitle, config) {
   if (!posts.length) {
     return `<p>No posts yet.</p>`;
   }
@@ -145,8 +157,8 @@ function postListMarkup(posts, sectionTitle) {
     .map(
       (post) => `
       <article class="post-item">
-        <h3><a href="${post.url}">${escapeHtml(post.title)}</a></h3>
-        <p class="meta">${formatDate(post.date)} • ${post.readTime} min read • ${post.tags.map((tag) => `<a class="tag-link" href="/tags/${post.tagIndex.get(tag)}/">#${escapeHtml(tag)}</a>`).join(' ')}</p>
+        <h3><a href="${withBase(config, post.url)}">${escapeHtml(post.title)}</a></h3>
+        <p class="meta">${formatDate(post.date)} • ${post.readTime} min read • ${post.tags.map((tag) => `<a class="tag-link" href="${withBase(config, `/tags/${post.tagIndex.get(tag)}/`)}">#${escapeHtml(tag)}</a>`).join(' ')}</p>
         <p class="intro">${escapeHtml(post.excerpt)}</p>
       </article>
     `,
@@ -180,7 +192,8 @@ function renderShell({ title, description, canonicalUrl, bodyClass = '', main, c
   <title>${escapeHtml(pageTitle)}</title>
   <meta name="description" content="${escapeHtml(metaDesc)}">
   <meta name="robots" content="index,follow">
-  <meta name="theme-color" content="#f7f5ef">
+  <meta name="theme-color" content="#ffffff">
+  <link rel="icon" href="${withBase(config, '/favicon.svg')}" type="image/svg+xml">
   ${buildCanonical(canonicalUrl)}
   ${renderMetaTags({
     title: pageTitle,
@@ -192,8 +205,8 @@ function renderShell({ title, description, canonicalUrl, bodyClass = '', main, c
     publishedTime: bodyClass === 'post-page' ? extraHead.publishedTime : undefined,
     modifiedTime: bodyClass === 'post-page' ? extraHead.modifiedTime : undefined,
   })}
-  <link rel="stylesheet" href="${config.assetsBase}/styles.css">
-  <link rel="alternate" type="application/rss+xml" title="RSS" href="${config.assetsBase}/rss.xml">
+  <link rel="stylesheet" href="${withBase(config, '/styles.css')}">
+  <link rel="alternate" type="application/rss+xml" title="RSS" href="${withBase(config, '/rss.xml')}">
   ${typeof extraHead === 'string' ? extraHead : extraHead.html || ''}
   ${jsonLdWebsite}
 </head>
@@ -201,20 +214,18 @@ function renderShell({ title, description, canonicalUrl, bodyClass = '', main, c
   <a class="skip-link" href="#content">Skip to content</a>
   <div class="frame">
     <header class="site-header">
-      <p class="brand-label">${escapeHtml(siteName)}</p>
-      <h1><a href="${config.assetsBase}/">${escapeHtml(siteName)}</a></h1>
-      <p class="subtitle">${escapeHtml(config.siteSubtitle)}</p>
+      <a href="${withBase(config, '/')}" class="site-title">${escapeHtml(siteName)}</a>
       <nav aria-label="Primary" class="site-nav">
-        <a href="${config.assetsBase}/">Home</a>
-        <a href="${config.assetsBase}/about/">About</a>
+        <a href="${withBase(config, '/')}">Home</a>
+        <a href="${withBase(config, '/about/')}">About</a>
       </nav>
     </header>
 
     <main id="content" class="${bodyClass}">${main}</main>
 
     <footer class="site-footer">
-      <p>© ${new Date().getFullYear()} ${escapeHtml(config.author)} · Built as a static site</p>
-      <p><a href="${config.assetsBase}/sitemap.xml">Sitemap</a> · <a href="${config.assetsBase}/rss.xml">RSS</a></p>
+      <p>© ${new Date().getFullYear()} ${escapeHtml(config.author)} · A minimal space on the web.</p>
+      <p><a href="${withBase(config, '/sitemap.xml')}">Sitemap</a> · <a href="${withBase(config, '/rss.xml')}">RSS</a></p>
     </footer>
   </div>
 </body>
@@ -236,8 +247,8 @@ function renderPostPage(post, { config, previousPost, nextPost }) {
 
   const nav = `
     <nav class="post-nav" aria-label="Post navigation">
-      ${previousPost ? `<a class="button" href="${previousPost.url}">← ${escapeHtml(previousPost.title)}</a>` : '<span></span>'}
-      ${nextPost ? `<a class="button" href="${nextPost.url}">${escapeHtml(nextPost.title)} →</a>` : '<span></span>'}
+      ${previousPost ? `<a class="button" href="${withBase(config, previousPost.url)}">← ${escapeHtml(previousPost.title)}</a>` : '<span></span>'}
+      ${nextPost ? `<a class="button" href="${withBase(config, nextPost.url)}">${escapeHtml(nextPost.title)} →</a>` : '<span></span>'}
     </nav>
   `;
 
@@ -245,7 +256,7 @@ function renderPostPage(post, { config, previousPost, nextPost }) {
     <article class="post-page">
       <p class="kicker">${formatDate(post.date)} · ${post.readTime} min read</p>
       <h1>${escapeHtml(post.title)}</h1>
-      <p class="meta">${post.tags.map((tag) => `<a class="tag-link" href="/tags/${post.tagIndex.get(tag)}/">#${escapeHtml(tag)}</a>`).join(' ')}</p>
+      <p class="meta">${post.tags.map((tag) => `<a class="tag-link" href="${withBase(config, `/tags/${post.tagIndex.get(tag)}/`)}">#${escapeHtml(tag)}</a>`).join(' ')}</p>
       <div class="divider"></div>
       <div class="post-content">${post.html}</div>
       ${nav}
@@ -274,15 +285,16 @@ async function writeFileSafe(filePath, content) {
 }
 
 async function build() {
-  const [configRaw, styleText, aboutRaw] = await Promise.all([
+  const [configRaw, styleText, faviconSvg, aboutRaw] = await Promise.all([
     fsp.readFile(CONFIG_PATH, 'utf8'),
     fsp.readFile(SRC_STYLE, 'utf8'),
+    fsp.readFile(SRC_FAVICON, 'utf8'),
     fsp.readFile(SRC_ABOUT, 'utf8').catch(() => '# About\n\nThis page is intentionally minimal and can be edited in `src/about.md`.')
   ]);
 
   const config = JSON.parse(configRaw);
   config.siteUrl = ensureAbs(config.siteUrl, '');
-  config.assetsBase = '';
+  config.assetsBase = normalizeBasePath(config.basePath);
 
   const postFiles = await fsp.readdir(SRC_POST_DIR);
   const allPosts = await Promise.all(
@@ -335,6 +347,7 @@ async function build() {
   await fsp.mkdir(DIST_DIR, { recursive: true });
 
   await writeFileSafe(path.join(DIST_DIR, 'styles.css'), styleText);
+  await writeFileSafe(path.join(DIST_DIR, 'favicon.svg'), faviconSvg);
 
   // Homepage
   const featuredPosts = sortedPosts.filter((post) => post.featured);
@@ -346,7 +359,7 @@ async function build() {
           (post) => `
             <article>
               <p class="kicker">Featured</p>
-              <h2><a href="${post.url}">${escapeHtml(post.title)}</a></h2>
+              <h2><a href="${withBase(config, post.url)}">${escapeHtml(post.title)}</a></h2>
               <p class="meta">${formatDate(post.date)} • ${post.readTime} min read</p>
               <p>${escapeHtml(post.excerpt)}</p>
             </article>
@@ -358,11 +371,11 @@ async function build() {
 
   const indexMain = `
     <section class="intro-block">
-      <h1>${escapeHtml(config.siteTitle)}</h1>
-      <p>${escapeHtml(config.siteDescription)}</p>
+      <h1>${escapeHtml(config.siteSubtitle)}</h1>
+      <p class="lead">${escapeHtml(config.siteDescription)}</p>
     </section>
     ${featuredSection}
-    ${postListMarkup(sortedPosts, 'Latest Posts')}
+    ${postListMarkup(sortedPosts, 'Latest Posts', config)}
   `;
 
   await writeFileSafe(
@@ -411,7 +424,7 @@ async function build() {
     const postsForTag = sortedPosts.filter((post) => post.tags.includes(rawTag));
     const tagMain = `
       <h1>Tag: ${escapeHtml(rawTag)}</h1>
-      ${postListMarkup(postsForTag, `Posts tagged ${rawTag}`)}
+      ${postListMarkup(postsForTag, `Posts tagged ${rawTag}`, config)}
     `;
     await writeFileSafe(
       path.join(DIST_DIR, 'tags', slug, 'index.html'),

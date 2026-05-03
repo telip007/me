@@ -24,6 +24,13 @@ Project-specific guidance for future agent sessions working on this repository.
 
 Run `npm run build` after changing source content, templates, styles, or config.
 
+## Publishing
+
+- GitHub Pages deployment is configured in `.github/workflows/pages.yml`.
+- Pushes to `main` build the site and deploy the generated `dist/` artifact.
+- The repository is published as a GitHub Pages project site at `https://telip007.github.io/me`.
+- Keep `src/config.json` `siteUrl` and `basePath` in sync. For this repo, `basePath` should remain `/me` unless moving to a custom domain.
+
 ## Repository structure
 
 - `src/config.json` — site metadata, author, canonical site URL, RSS/sitemap values.
@@ -32,6 +39,8 @@ Run `npm run build` after changing source content, templates, styles, or config.
 - `src/styles.css` — global styling for generated pages.
 - `scripts/build.js` — the static site generator. It reads `src/`, clears `dist/`, then writes generated HTML, RSS, sitemap, robots, and CSS.
 - `scripts/clean.js` — removes generated output.
+- `src/favicon.svg` — source favicon copied into generated output.
+- `.github/workflows/pages.yml` — GitHub Pages build/deploy workflow.
 - `dist/` — generated static output. Do not manually edit files here; change `src/` or `scripts/build.js` and rebuild.
 
 ## Content conventions

@@ -23,6 +23,12 @@ npm run dev
 
 This runs the build script in watch mode and rebuilds on source changes.
 
+## Publishing
+
+Pushing to `main` deploys `dist/` to GitHub Pages through `.github/workflows/pages.yml`.
+
+The current production URL is configured as `https://telip007.github.io/me` with `basePath: "/me"` in `src/config.json`. If you move to a custom domain, update both values before deploying.
+
 ## Clean output
 
 ```bash
@@ -77,3 +83,7 @@ Build produces:
 ## Notes
 
 This setup intentionally avoids CMSs and heavy tooling. Add more posts by adding Markdown files; the build regenerates tags, post listings, next/previous navigation, RSS, sitemap and pages automatically.
+
+## License
+
+Code in this repository is licensed under the MIT License. Writing, articles, and personal content under `src/about.md` and `src/posts/` are © Talip Göksu. All rights reserved unless stated otherwise.
