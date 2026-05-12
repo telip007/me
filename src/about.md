@@ -8,7 +8,7 @@ description: "About Talip Göksu and the intent behind this blog."
 
 I'm Talip Göksu. I'm a software engineer and team lead, based in Germany.
 
-Most of my work is mobile apps, web platforms, and whatever backend is holding them together. These days that's mostly TypeScript, but I've done native iOS and Android too. My time is split between leading teams, making architectural calls, and building tools that make other developers faster — or at least less annoyed.
+Most of my work is mobile apps, web platforms, and whatever backend is holding them together. That means native iOS and Android, TypeScript stacks, and everything in between. My time is split between leading teams, making architectural calls, and building tools that make other developers faster — or at least less annoyed.
 
 I like systems that are clear more than clever. Good architecture, tests that actually catch bugs, calm processes, and code that doesn't pretend to be simpler than it is. I want software that lasts and is honest about its trade-offs.
 
