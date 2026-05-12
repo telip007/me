@@ -7,56 +7,42 @@ featured: true
 slug: a-small-blog-built-simply
 ---
 
-This is the first post on this blog, so it feels right to start with the shape of the place itself: how it is built, why it is intentionally small, and what I want to use it for.
+This is the first post, so I'll start with the place itself: how it's built, why I kept it small, and what I want to use it for.
 
-The short version: this is a static blog made from Markdown files, a small Node build script, and plain HTML. No CMS. No frontend framework. No database. No dashboard.
+The short version: Markdown files, a tiny Node script, and plain HTML. No CMS, no framework, no database, no dashboard.
 
-That is not minimalism for its own sake. It is a response to how I want to write now.
+That's not minimalism for its own sake. It's just how I want to write now.
 
-## How it is built
+### How it's built
 
-The source of the site lives in a few files:
+The site is a handful of files. Site metadata in `src/config.json`. The about page is `src/about.md`. Posts in `src/posts/*.md`. Styles in `src/styles.css`. The generator is `scripts/build.js`.
 
-- site metadata in `src/config.json`,
-- page copy in `src/about.md`,
-- articles in `src/posts/*.md`,
-- styles in `src/styles.css`,
-- and the generator in `scripts/build.js`.
+The build script reads those, clears `dist/`, and writes static HTML: homepage, article pages, tag pages, RSS, sitemap, robots, CSS. You get a `dist/` folder that almost any server can handle.
 
-The build script reads those inputs and writes static output: the homepage, article pages, tag pages, RSS, sitemap, robots, and CSS. The result is a `dist/` folder that can be served by almost anything.
+Very little magic. That's the point.
 
-There is very little magic here. That is the feature.
+### Why no CMS or framework
 
-## Why no CMS or framework
+A CMS makes sense when non-technical people need to edit content. That's not my situation. I don't want to log into an admin screen, click through forms, and hope the system understood what I meant.
 
-A CMS is useful when people need a human-friendly interface for managing content. But with AI-assisted development, that assumption changes. I do not need to log into an admin screen, fill out forms, and hope the system maps my intent correctly.
+I can just say:
 
-I can describe the change I want:
+> Write a short intro post. Explain how the blog is built, why there's no CMS, and what readers can expect.
 
-> Write a short introduction post for the blog. Explain how it is built, why there is no CMS, and what readers can expect.
+Then an agent edits the Markdown, updates metadata, rebuilds the site, and shows me the result. No dashboard. The interface is the conversation. The files are the source of truth.
 
-Then an agent can edit the Markdown, update metadata, rebuild the site, and show me the result. The interface is no longer a dashboard. The interface is the conversation, and the source files stay the source of truth.
+Same for frontend frameworks. Nothing here needs to be a client-side app. The writing should load fast, stay inspectable, and not carry more machinery than it needs.
 
-The same is true for a frontend framework. There is nothing on this site that needs to be a client-side application. The writing should load quickly, remain inspectable, and avoid carrying more machinery than it needs.
+### What stays human
 
-## What still stays human
+AI can handle the publishing busywork, but not the responsibility. The decisions are still mine: what's worth saying, what stays private, how direct the tone should be, when a feature actually deserves to exist, and whether the final thing feels honest.
 
-AI can remove the busywork around publishing, but it does not remove responsibility.
+The agent does the editing, rebuilding, and checking. But the intent has to come from somewhere.
 
-The important decisions are still mine:
+### What to expect
 
-- what is worth saying,
-- what should stay private,
-- how direct the tone should be,
-- when a feature deserves to exist,
-- and whether the final page feels honest.
+I want this to be a place for thinking out loud about engineering, leadership, product ideas, AI-assisted development, and the discipline of building useful things.
 
-The agent can help with the mechanics. It can edit, rebuild, and verify. But the intent still has to come from somewhere.
+Some posts will be practical. Some will be more reflective. Most should be short enough to respect your time and specific enough that they're still useful when I come back to them later.
 
-## What to expect here
-
-I want this blog to be a place for thinking out loud about software engineering, leadership, product ideas, AI-assisted development, and the discipline of building useful things.
-
-Some posts will be practical. Some will be reflective. Most should be short enough to respect the reader's time and specific enough to be useful later.
-
-That is the goal: a small place on the web, easy to change, hard to overcomplicate, and clear enough to keep writing in.
+That's the goal: a small place, easy to change, hard to overcomplicate, and clear enough that I actually keep writing in it.
