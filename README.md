@@ -27,7 +27,7 @@ This runs the build script in watch mode and rebuilds on source changes.
 
 Pushing to `main` deploys `dist/` to GitHub Pages through `.github/workflows/pages.yml`.
 
-The current production URL is configured as `http://goeksu.me` with an empty `basePath` in `src/config.json`. If you move away from the custom domain, update both values before deploying.
+The current production URL is configured as `https://goeksu.me` with an empty `basePath` in `src/config.json`. If you move away from the custom domain, update both values before deploying.
 
 ## Clean output
 

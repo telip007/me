@@ -42,7 +42,9 @@ function formatDate(value) {
   try {
     const date = new Date(value);
     return new Intl.DateTimeFormat('en-US', {
-      dateStyle: 'medium',
+      day: '2-digit',
+      month: 'short',
+      year: 'numeric',
     }).format(date);
   } catch {
     return 'Unknown date';
@@ -149,27 +151,56 @@ function renderJsonLdPost({ post, siteUrl, siteName, author, canonicalUrl }) {
 }
 
 function postListMarkup(posts, sectionTitle, config) {
+  const sectionHeader = `
+    <header class="section-heading">
+      <div>
+        <p class="eyebrow">Journal</p>
+        <h2 id="journal-title">${escapeHtml(sectionTitle)}</h2>
+      </div>
+      <p class="section-count"><span>${String(posts.length).padStart(2, '0')}</span> ${posts.length === 1 ? 'essay' : 'essays'}</p>
+    </header>
+  `;
+
   if (!posts.length) {
-    return `<p>No posts yet.</p>`;
+    return `
+      <section class="journal" aria-labelledby="journal-title">
+        ${sectionHeader}
+        <div class="empty-index">
+          <div class="material-grid" aria-hidden="true">
+            <span></span><span></span><span></span><span></span>
+          </div>
+          <div class="empty-copy">
+            <p class="eyebrow">Index / 000</p>
+            <h3>No essays published yet.</h3>
+            <p>The first piece will appear here when it is ready.</p>
+          </div>
+        </div>
+      </section>
+    `;
   }
 
   const items = posts
     .map(
-      (post) => `
+      (post, index) => `
       <article class="post-item">
-        <h3><a href="${withBase(config, post.url)}">${escapeHtml(post.title)}</a></h3>
-        <p class="meta">${formatDate(post.date)} • ${post.readTime} min read • ${post.tags.map((tag) => `<a class="tag-link" href="${withBase(config, `/tags/${post.tagIndex.get(tag)}/`)}">#${escapeHtml(tag)}</a>`).join(' ')}</p>
-        <p class="intro">${escapeHtml(post.excerpt)}</p>
+        <a class="post-link" href="${withBase(config, post.url)}">
+          <span class="post-number">${String(index + 1).padStart(3, '0')}</span>
+          <span class="post-copy">
+            <span class="post-meta">${formatDate(post.date)} · ${post.readTime} min read</span>
+            <span class="post-title">${escapeHtml(post.title)}</span>
+            <span class="post-excerpt">${escapeHtml(post.excerpt)}</span>
+          </span>
+          <span class="post-arrow" aria-hidden="true">↗</span>
+        </a>
       </article>
     `,
     )
     .join('\n');
 
   return `
-    <section class="listing">
-      <h2>${escapeHtml(sectionTitle)}</h2>
-      <div class="divider"></div>
-      ${items}
+    <section class="journal" aria-labelledby="journal-title">
+      ${sectionHeader}
+      <div class="post-list">${items}</div>
     </section>
   `;
 }
@@ -185,14 +216,15 @@ function renderShell({ title, description, canonicalUrl, bodyClass = '', main, c
   });
 
   return `<!doctype html>
-<html lang="${config.language || 'en'}">
+<html lang="${config.language || 'en'}" id="top">
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>${escapeHtml(pageTitle)}</title>
   <meta name="description" content="${escapeHtml(metaDesc)}">
   <meta name="robots" content="index,follow">
-  <meta name="theme-color" content="#ffffff">
+  <meta name="theme-color" content="#050505">
+  <meta name="color-scheme" content="dark">
   <link rel="icon" href="${withBase(config, '/favicon.svg')}" type="image/svg+xml">
   ${buildCanonical(canonicalUrl)}
   ${renderMetaTags({
@@ -216,16 +248,22 @@ function renderShell({ title, description, canonicalUrl, bodyClass = '', main, c
     <header class="site-header">
       <a href="${withBase(config, '/')}" class="site-title">${escapeHtml(siteName)}</a>
       <nav aria-label="Primary" class="site-nav">
-        <a href="${withBase(config, '/')}">Home</a>
-        <a href="${withBase(config, '/about/')}">About</a>
+        <a href="${withBase(config, '/')}"${bodyClass === 'home' ? ' aria-current="page"' : ''}>Index</a>
+        <a href="${withBase(config, '/about/')}"${bodyClass === 'about-page' ? ' aria-current="page"' : ''}>About</a>
+        <a href="${withBase(config, '/rss.xml')}">RSS</a>
       </nav>
     </header>
 
     <main id="content" class="${bodyClass}">${main}</main>
 
     <footer class="site-footer">
-      <p>© ${new Date().getFullYear()} ${escapeHtml(config.author)} · A minimal space on the web.</p>
-      <p><a href="${withBase(config, '/sitemap.xml')}">Sitemap</a> · <a href="${withBase(config, '/rss.xml')}">RSS</a></p>
+      <p>© ${new Date().getFullYear()} ${escapeHtml(config.author)}</p>
+      <p class="footer-note">Independent notes on making useful things.</p>
+      <nav aria-label="Footer">
+        <a href="${withBase(config, '/rss.xml')}">RSS</a>
+        <a href="${withBase(config, '/sitemap.xml')}">Sitemap</a>
+        <a href="#top">Back to top ↑</a>
+      </nav>
     </footer>
   </div>
 </body>
@@ -253,11 +291,16 @@ function renderPostPage(post, { config, previousPost, nextPost }) {
   `;
 
   const main = `
-    <article class="post-page">
-      <p class="kicker">${formatDate(post.date)} · ${post.readTime} min read</p>
-      <h1>${escapeHtml(post.title)}</h1>
-      <p class="meta">${post.tags.map((tag) => `<a class="tag-link" href="${withBase(config, `/tags/${post.tagIndex.get(tag)}/`)}">#${escapeHtml(tag)}</a>`).join(' ')}</p>
-      <div class="divider"></div>
+    <article class="post-article">
+      <header class="post-header">
+        <p class="eyebrow">Essay / ${formatDate(post.date)}</p>
+        <h1>${escapeHtml(post.title)}</h1>
+        <p class="post-deck">${escapeHtml(post.excerpt)}</p>
+        <div class="post-byline">
+          <p>${post.readTime} min read</p>
+          <p>${post.tags.map((tag) => `<a class="tag-link" href="${withBase(config, `/tags/${post.tagIndex.get(tag)}/`)}">${escapeHtml(tag)}</a>`).join(' · ')}</p>
+        </div>
+      </header>
       <div class="post-content">${post.html}</div>
       ${nav}
       ${jsonLdPost}
@@ -296,7 +339,10 @@ async function build() {
   config.siteUrl = ensureAbs(config.siteUrl, '');
   config.assetsBase = normalizeBasePath(config.basePath);
 
-  const postFiles = await fsp.readdir(SRC_POST_DIR);
+  const postFiles = await fsp.readdir(SRC_POST_DIR).catch((error) => {
+    if (error.code === 'ENOENT') return [];
+    throw error;
+  });
   const allPosts = await Promise.all(
     postFiles
       .filter((name) => name.endsWith('.md'))
@@ -349,33 +395,19 @@ async function build() {
   await writeFileSafe(path.join(DIST_DIR, 'styles.css'), styleText);
   await writeFileSafe(path.join(DIST_DIR, 'favicon.svg'), faviconSvg);
 
-  // Homepage
-  const featuredPosts = sortedPosts.filter((post) => post.featured);
-  const featuredSection = featuredPosts.length
-    ? `
-      <section class="featured">` +
-      featuredPosts
-        .map(
-          (post) => `
-            <article>
-              <p class="kicker">Featured</p>
-              <h2><a href="${withBase(config, post.url)}">${escapeHtml(post.title)}</a></h2>
-              <p class="meta">${formatDate(post.date)} • ${post.readTime} min read</p>
-              <p>${escapeHtml(post.excerpt)}</p>
-            </article>
-          `,
-        )
-        .join('') +
-      `</section>`
-    : '';
-
   const indexMain = `
-    <section class="intro-block">
-      <h1>${escapeHtml(config.siteSubtitle)}</h1>
-      <p class="lead">${escapeHtml(config.siteDescription)}</p>
+    <section class="intro-block" aria-labelledby="intro-title">
+      <div class="intro-meta">
+        <p class="eyebrow">Independent notes</p>
+        <p class="edition">Edition 01 · Ongoing</p>
+      </div>
+      <h1 id="intro-title">${escapeHtml(config.siteSubtitle)}</h1>
+      <div class="intro-bottom">
+        <p class="lead">${escapeHtml(config.siteDescription)}</p>
+        <a class="text-link" href="${withBase(config, '/about/')}">Read the note <span aria-hidden="true">↗</span></a>
+      </div>
     </section>
-    ${featuredSection}
-    ${postListMarkup(sortedPosts, 'Latest Posts', config)}
+    ${postListMarkup(sortedPosts, 'Essays', config)}
   `;
 
   await writeFileSafe(
@@ -405,7 +437,15 @@ async function build() {
   const aboutTitle = aboutParsed.data.title || 'About';
   const aboutDescription = aboutParsed.data.excerpt || aboutParsed.data.description || 'About this static blog.';
   const aboutHtml = md.render(aboutParsed.content);
-  const aboutMain = `<article class="about">${aboutHtml.includes('<h1') ? '' : `<h1>${escapeHtml(aboutTitle)}</h1>`}${aboutHtml}</article>`;
+  const aboutMain = `
+    <article class="about">
+      <aside class="page-marker" aria-hidden="true">
+        <span>About</span>
+        <span>TG / 01</span>
+      </aside>
+      <div class="about-content">${aboutHtml.includes('<h1') ? '' : `<h1>${escapeHtml(aboutTitle)}</h1>`}${aboutHtml}</div>
+    </article>
+  `;
   await writeFileSafe(
     path.join(DIST_DIR, 'about', 'index.html'),
     renderShell({
