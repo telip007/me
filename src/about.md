@@ -1,17 +1,17 @@
 ---
-title: "About"
-slug: about
-description: "About Talip Göksu and the intent behind this blog."
+title: "Über Mich"
+slug: ueber-mich
+description: "Über mich und die Intention hinter diesem Blog"
 ---
 
-# About
+# Über Mich
 
-I'm Talip Göksu. I'm a software engineer and team lead, based in Germany.
+Ich bin Talip, Software Entwickler und Leiter eines Softwareentwicklungsteams.
 
-I'm a software engineer and team lead. I work across mobile, web, and backend, and I spend most of my time leading teams, making architecture calls, and building tools so other developers can move faster. Or complain less.
+Um ehrlich zu sein, habe ich keinen wirklichen Plan was ich hiermit anstellen werde.
 
-I like systems that are clear more than clever. Good architecture, tests that actually catch bugs, calm processes, and code that doesn't pretend to be simpler than it is. I want software that lasts and is honest about its trade-offs.
+Schreiben werde ich über Themen die mich interessieren. Sowohl Technologie, Softwareentwicklung oder KI werden hier ihren Platz finden als auch freie Künste, wie Philosophie oder Gesellschaftliches. Meine Gedanken sind ziemlich kreuz und quer. Diese will ich hier einfangen und ihnen etwas Struktur geben.
 
-This blog is mostly me thinking out loud. Engineering, leadership, product ideas, AI-assisted development, discipline — the small decisions that end up mattering more than the big announcements.
+Auch will ich etwas tun, was außerhalb meiner Komfortzone liegt. Schreiben lag mir noch nie. Das will ich ändern.
 
-You'll find notes here, not hot takes. What I'm learning, what I'm building, and things I probably should have written down earlier.
+Dieser Blog entstand natürlich mit der Hilfe von KI. Bei allem was aber über Füllertexte hinaus geht, werde ich mich zwingen selbst schreiben. Vermutlich, zum Leid derjenigen die sich hierher verirren und das lesen müssen.

@@ -72,9 +72,9 @@ Edit `src/config.json`:
 Build produces:
 
 - `dist/index.html`
-- `dist/posts/<slug>/index.html`
-- `dist/about/index.html`
-- `dist/tags/<tag>/index.html`
+- `dist/texte/<slug>/index.html`
+- `dist/ueber-mich/index.html`
+- `dist/themen/<tag>/index.html`
 - `dist/rss.xml`
 - `dist/sitemap.xml`
 - `dist/robots.txt`

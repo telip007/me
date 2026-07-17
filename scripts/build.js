@@ -41,13 +41,13 @@ function withBase(config, rel) {
 function formatDate(value) {
   try {
     const date = new Date(value);
-    return new Intl.DateTimeFormat('en-US', {
+    return new Intl.DateTimeFormat('de-DE', {
       day: '2-digit',
       month: 'short',
       year: 'numeric',
     }).format(date);
   } catch {
-    return 'Unknown date';
+    return 'Unbekanntes Datum';
   }
 }
 
@@ -94,7 +94,7 @@ function renderMetaTags({ title, description, canonicalUrl, image, type = 'websi
   `;
 }
 
-function renderJsonLdWebsite({ siteUrl, siteName, description }) {
+function renderJsonLdWebsite({ siteUrl, siteName, description, language }) {
   return `
     <script type="application/ld+json">
       ${JSON.stringify(
@@ -104,7 +104,7 @@ function renderJsonLdWebsite({ siteUrl, siteName, description }) {
           name: siteName,
           description,
           url: siteUrl,
-          inLanguage: 'en',
+          inLanguage: language,
         },
         null,
         2,
@@ -113,7 +113,7 @@ function renderJsonLdWebsite({ siteUrl, siteName, description }) {
   `;
 }
 
-function renderJsonLdPost({ post, siteUrl, siteName, author, canonicalUrl }) {
+function renderJsonLdPost({ post, siteUrl, siteName, author, canonicalUrl, language }) {
   return `
     <script type="application/ld+json">
       ${JSON.stringify(
@@ -126,6 +126,7 @@ function renderJsonLdPost({ post, siteUrl, siteName, author, canonicalUrl }) {
           },
           headline: post.title,
           description: post.excerpt,
+          inLanguage: language,
           image: post.image || undefined,
           datePublished: post.date,
           dateModified: post.updated || post.date,
@@ -154,10 +155,10 @@ function postListMarkup(posts, sectionTitle, config) {
   const sectionHeader = `
     <header class="section-heading">
       <div>
-        <p class="eyebrow">Journal</p>
+        <p class="eyebrow">Notizen</p>
         <h2 id="journal-title">${escapeHtml(sectionTitle)}</h2>
       </div>
-      <p class="section-count"><span>${String(posts.length).padStart(2, '0')}</span> ${posts.length === 1 ? 'essay' : 'essays'}</p>
+      <p class="section-count"><span>${String(posts.length).padStart(2, '0')}</span> ${posts.length === 1 ? 'Text' : 'Texte'}</p>
     </header>
   `;
 
@@ -171,8 +172,8 @@ function postListMarkup(posts, sectionTitle, config) {
           </div>
           <div class="empty-copy">
             <p class="eyebrow">Index / 000</p>
-            <h3>No essays published yet.</h3>
-            <p>The first piece will appear here when it is ready.</p>
+            <h3>Noch keine Texte veröffentlicht.</h3>
+            <p>Der erste Text erscheint hier, wenn er bereit ist.</p>
           </div>
         </div>
       </section>
@@ -186,7 +187,7 @@ function postListMarkup(posts, sectionTitle, config) {
         <a class="post-link" href="${withBase(config, post.url)}">
           <span class="post-number">${String(index + 1).padStart(3, '0')}</span>
           <span class="post-copy">
-            <span class="post-meta">${formatDate(post.date)} · ${post.readTime} min read</span>
+            <span class="post-meta">${formatDate(post.date)} · ${post.readTime} Min. Lesezeit</span>
             <span class="post-title">${escapeHtml(post.title)}</span>
             <span class="post-excerpt">${escapeHtml(post.excerpt)}</span>
           </span>
@@ -213,10 +214,11 @@ function renderShell({ title, description, canonicalUrl, bodyClass = '', main, c
     siteUrl: config.siteUrl,
     siteName,
     description: config.siteDescription,
+    language: config.language || 'de',
   });
 
   return `<!doctype html>
-<html lang="${config.language || 'en'}" id="top">
+<html lang="${config.language || 'de'}" id="top">
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -243,13 +245,13 @@ function renderShell({ title, description, canonicalUrl, bodyClass = '', main, c
   ${jsonLdWebsite}
 </head>
 <body>
-  <a class="skip-link" href="#content">Skip to content</a>
+  <a class="skip-link" href="#content">Zum Inhalt springen</a>
   <div class="frame">
     <header class="site-header">
       <a href="${withBase(config, '/')}" class="site-title">${escapeHtml(siteName)}</a>
-      <nav aria-label="Primary" class="site-nav">
+      <nav aria-label="Hauptnavigation" class="site-nav">
         <a href="${withBase(config, '/')}"${bodyClass === 'home' ? ' aria-current="page"' : ''}>Index</a>
-        <a href="${withBase(config, '/about/')}"${bodyClass === 'about-page' ? ' aria-current="page"' : ''}>About</a>
+        <a href="${withBase(config, config.aboutPath)}"${bodyClass === 'about-page' ? ' aria-current="page"' : ''}>Über mich</a>
         <a href="${withBase(config, '/rss.xml')}">RSS</a>
       </nav>
     </header>
@@ -258,11 +260,11 @@ function renderShell({ title, description, canonicalUrl, bodyClass = '', main, c
 
     <footer class="site-footer">
       <p>© ${new Date().getFullYear()} ${escapeHtml(config.author)}</p>
-      <p class="footer-note">Independent notes on making useful things.</p>
-      <nav aria-label="Footer">
+      <p class="footer-note">Meine Gedanken</p>
+      <nav aria-label="Fußzeile">
         <a href="${withBase(config, '/rss.xml')}">RSS</a>
         <a href="${withBase(config, '/sitemap.xml')}">Sitemap</a>
-        <a href="#top">Back to top ↑</a>
+        <a href="#top">Nach oben ↑</a>
       </nav>
     </footer>
   </div>
@@ -281,10 +283,11 @@ function renderPostPage(post, { config, previousPost, nextPost }) {
     siteName: config.siteTitle,
     author: config.author,
     canonicalUrl: canonical,
+    language: config.language || 'de',
   });
 
   const nav = `
-    <nav class="post-nav" aria-label="Post navigation">
+    <nav class="post-nav" aria-label="Artikelnavigation">
       ${previousPost ? `<a class="button" href="${withBase(config, previousPost.url)}">← ${escapeHtml(previousPost.title)}</a>` : '<span></span>'}
       ${nextPost ? `<a class="button" href="${withBase(config, nextPost.url)}">${escapeHtml(nextPost.title)} →</a>` : '<span></span>'}
     </nav>
@@ -293,12 +296,12 @@ function renderPostPage(post, { config, previousPost, nextPost }) {
   const main = `
     <article class="post-article">
       <header class="post-header">
-        <p class="eyebrow">Essay / ${formatDate(post.date)}</p>
+        <p class="eyebrow">Text / ${formatDate(post.date)}</p>
         <h1>${escapeHtml(post.title)}</h1>
         <p class="post-deck">${escapeHtml(post.excerpt)}</p>
         <div class="post-byline">
-          <p>${post.readTime} min read</p>
-          <p>${post.tags.map((tag) => `<a class="tag-link" href="${withBase(config, `/tags/${post.tagIndex.get(tag)}/`)}">${escapeHtml(tag)}</a>`).join(' · ')}</p>
+          <p>${post.readTime} Min. Lesezeit</p>
+          <p>${post.tags.map((tag) => `<a class="tag-link" href="${withBase(config, `/themen/${post.tagIndex.get(tag)}/`)}">${escapeHtml(tag)}</a>`).join(' · ')}</p>
         </div>
       </header>
       <div class="post-content">${post.html}</div>
@@ -332,12 +335,15 @@ async function build() {
     fsp.readFile(CONFIG_PATH, 'utf8'),
     fsp.readFile(SRC_STYLE, 'utf8'),
     fsp.readFile(SRC_FAVICON, 'utf8'),
-    fsp.readFile(SRC_ABOUT, 'utf8').catch(() => '# About\n\nThis page is intentionally minimal and can be edited in `src/about.md`.')
+    fsp.readFile(SRC_ABOUT, 'utf8').catch(() => '# Über mich\n\nDiese Seite kann in `src/about.md` bearbeitet werden.')
   ]);
 
   const config = JSON.parse(configRaw);
   config.siteUrl = ensureAbs(config.siteUrl, '');
   config.assetsBase = normalizeBasePath(config.basePath);
+  const aboutParsed = matter(aboutRaw);
+  const aboutSlug = slugifyTag(aboutParsed.data.slug || 'ueber-mich') || 'ueber-mich';
+  config.aboutPath = `/${aboutSlug}/`;
 
   const postFiles = await fsp.readdir(SRC_POST_DIR).catch((error) => {
     if (error.code === 'ENOENT') return [];
@@ -378,7 +384,7 @@ async function build() {
   const sortedPosts = [...allPosts].sort((a, b) => new Date(b.date) - new Date(a.date));
   const tagSet = new Map();
   sortedPosts.forEach((post) => {
-    post.url = `/posts/${post.slug}/`;
+    post.url = `/texte/${post.slug}/`;
     (post.tags || []).forEach((tag) => {
       const key = slugifyTag(tag);
       tagSet.set(tag, key);
@@ -398,16 +404,16 @@ async function build() {
   const indexMain = `
     <section class="intro-block" aria-labelledby="intro-title">
       <div class="intro-meta">
-        <p class="eyebrow">Independent notes</p>
-        <p class="edition">Edition 01 · Ongoing</p>
+        <p class="eyebrow">Persönliche Notizen</p>
+        <p class="edition">Ausgabe 01 · Fortlaufend</p>
       </div>
       <h1 id="intro-title">${escapeHtml(config.siteSubtitle)}</h1>
       <div class="intro-bottom">
         <p class="lead">${escapeHtml(config.siteDescription)}</p>
-        <a class="text-link" href="${withBase(config, '/about/')}">Read the note <span aria-hidden="true">↗</span></a>
+        <a class="text-link" href="${withBase(config, config.aboutPath)}">Mehr über mich <span aria-hidden="true">↗</span></a>
       </div>
     </section>
-    ${postListMarkup(sortedPosts, 'Essays', config)}
+    ${postListMarkup(sortedPosts, 'Texte', config)}
   `;
 
   await writeFileSafe(
@@ -433,45 +439,63 @@ async function build() {
   );
 
   // About page
-  const aboutParsed = matter(aboutRaw);
-  const aboutTitle = aboutParsed.data.title || 'About';
-  const aboutDescription = aboutParsed.data.excerpt || aboutParsed.data.description || 'About this static blog.';
+  const aboutTitle = aboutParsed.data.title || 'Über mich';
+  const aboutDescription = aboutParsed.data.excerpt || aboutParsed.data.description || 'Über diesen Blog.';
   const aboutHtml = md.render(aboutParsed.content);
   const aboutMain = `
     <article class="about">
       <aside class="page-marker" aria-hidden="true">
-        <span>About</span>
+        <span>Über mich</span>
         <span>TG / 01</span>
       </aside>
       <div class="about-content">${aboutHtml.includes('<h1') ? '' : `<h1>${escapeHtml(aboutTitle)}</h1>`}${aboutHtml}</div>
     </article>
   `;
   await writeFileSafe(
-    path.join(DIST_DIR, 'about', 'index.html'),
+    path.join(DIST_DIR, aboutSlug, 'index.html'),
     renderShell({
       title: aboutTitle,
       description: aboutDescription,
-      canonicalUrl: ensureAbs(config.siteUrl, '/about/'),
+      canonicalUrl: ensureAbs(config.siteUrl, config.aboutPath),
       bodyClass: 'about-page',
       main: aboutMain,
       config,
     }),
   );
 
+  if (config.aboutPath !== '/about/') {
+    const target = withBase(config, config.aboutPath);
+    await writeFileSafe(
+      path.join(DIST_DIR, 'about', 'index.html'),
+      `<!doctype html>
+<html lang="${config.language || 'de'}">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="robots" content="noindex">
+  <meta http-equiv="refresh" content="0; url=${target}">
+  <link rel="canonical" href="${ensureAbs(config.siteUrl, config.aboutPath)}">
+  <title>Weiterleitung | ${escapeHtml(config.siteTitle)}</title>
+</head>
+<body><p><a href="${target}">Weiter zu ${escapeHtml(aboutTitle)}</a></p></body>
+</html>`,
+    );
+  }
+
   // Tag pages
   const tags = [...tagSet.entries()];
   for (const [rawTag, slug] of tags) {
     const postsForTag = sortedPosts.filter((post) => post.tags.includes(rawTag));
     const tagMain = `
-      <h1>Tag: ${escapeHtml(rawTag)}</h1>
-      ${postListMarkup(postsForTag, `Posts tagged ${rawTag}`, config)}
+      <h1>Thema: ${escapeHtml(rawTag)}</h1>
+      ${postListMarkup(postsForTag, `Texte zum Thema ${rawTag}`, config)}
     `;
     await writeFileSafe(
-      path.join(DIST_DIR, 'tags', slug, 'index.html'),
+      path.join(DIST_DIR, 'themen', slug, 'index.html'),
       renderShell({
-        title: `Tag: ${rawTag}`,
-        description: `Posts tagged with ${rawTag}.`,
-        canonicalUrl: ensureAbs(config.siteUrl, `/tags/${slug}/`),
+        title: `Thema: ${rawTag}`,
+        description: `Texte zum Thema ${rawTag}.`,
+        canonicalUrl: ensureAbs(config.siteUrl, `/themen/${slug}/`),
         bodyClass: 'tag-page',
         main: tagMain,
         config,
@@ -500,7 +524,7 @@ async function build() {
     <title><![CDATA[${config.siteTitle}]]></title>
     <link>${siteRoot(config)}/</link>
     <description><![CDATA[${config.siteDescription}]]></description>
-    <language>${config.language || 'en'}</language>
+    <language>${config.language || 'de'}</language>
     ${rssItems}
   </channel>
 </rss>`;
@@ -515,12 +539,12 @@ async function build() {
 
   const urls = [
     '/',
-    '/about/',
+    config.aboutPath,
     '/rss.xml',
     '/sitemap.xml',
     '/robots.txt',
     ...sortedPosts.map((post) => post.url),
-    ...tags.map(([, slug]) => `/tags/${slug}/`),
+    ...tags.map(([, slug]) => `/themen/${slug}/`),
   ].map((u) => `<url><loc>${ensureAbs(config.siteUrl, u)}</loc></url>`);
 
   const sitemap = `<?xml version="1.0" encoding="UTF-8" ?>
@@ -535,6 +559,10 @@ function slugifyTag(value) {
   return String(value)
     .toLowerCase()
     .trim()
+    .replace(/ä/g, 'ae')
+    .replace(/ö/g, 'oe')
+    .replace(/ü/g, 'ue')
+    .replace(/ß/g, 'ss')
     .replace(/\s+/g, '-')
     .replace(/[^a-z0-9-]/g, '');
 }
