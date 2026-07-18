@@ -6,7 +6,7 @@ description: "Über mich und die Intention hinter diesem Blog"
 
 # Über Mich
 
-Ich bin Talip, Leiter eines Softwareentwicklungsteams bei der [PACE Mobility GmbH](https://pace.cloud). Nebenbei, entwickle ich mit [CobTech](https://cobtech.de) maßgeschneiderte IT-Lösungen für unsere Kunden.
+Ich bin Talip, Leiter eines Softwareentwicklungsteams bei der [PACE Mobility GmbH](https://pace.cloud). Nebenbei entwickle ich mit [CobTech](https://cobtech.de) maßgeschneiderte IT-Lösungen für unsere Kunden.
 
 Ich schreibe hier über Themen die mich interessieren. Sowohl Technologie, Softwareentwicklung oder KI finden hier ihren Platz als auch freie Künste, wie Philosophie oder Gesellschaftliches. Meine Gedanken sind ziemlich kreuz und quer. Diese versuche ich hier einzufangen und ihnen etwas Struktur zu geben.
 
