@@ -12,4 +12,4 @@ Ich schreibe hier über Themen die mich interessieren. Sowohl Technologie, Softw
 
 Ich möchte hiermit etwas tun, was außerhalb meiner Komfortzone liegt. Schreiben lag mir noch nie. Das soll sich ändern.
 
-Dieser Blog entstand natürlich mit der Hilfe von KI. Alles was aber über Füllertexte hinaus geht, zwinge ich mich selbst zu schreiben. Vermutlich, zum Leid derjenigen die sich hierher verirren.
+Dieser Blog entstand natürlich mit der Hilfe von KI. Alles was aber über Füllertexte hinaus geht, zwinge ich mich selbst zu schreiben. Vermutlich zum Leid derjenigen, die sich hierher verirren.
