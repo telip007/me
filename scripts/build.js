@@ -155,7 +155,6 @@ function postListMarkup(posts, sectionTitle, config) {
   const sectionHeader = `
     <header class="section-heading">
       <div>
-        <p class="eyebrow">Notizen</p>
         <h2 id="journal-title">${escapeHtml(sectionTitle)}</h2>
       </div>
       <p class="section-count"><span>${String(posts.length).padStart(2, '0')}</span> ${posts.length === 1 ? 'Text' : 'Texte'}</p>
@@ -404,7 +403,6 @@ async function build() {
   const indexMain = `
     <section class="intro-block" aria-labelledby="intro-title">
       <div class="intro-meta">
-        <p class="eyebrow">Persönliche Notizen</p>
         <p class="edition">Ausgabe 01 · Fortlaufend</p>
       </div>
       <h1 id="intro-title">${escapeHtml(config.siteSubtitle)}</h1>
