@@ -501,6 +501,18 @@ a:focus-visible {
   font-weight: 500;
   letter-spacing: -0.08em;
   line-height: 0.8;
+  overflow-wrap: break-word;
+  hyphens: auto;
+}
+
+.about-content h2 {
+  margin: clamp(3rem, 6vw, 4.5rem) 0 1.5rem;
+  color: var(--paper);
+  font-family: var(--display);
+  font-size: clamp(1.75rem, 3vw, 2.5rem);
+  font-weight: 500;
+  letter-spacing: -0.03em;
+  line-height: 1.1;
 }
 
 .about-content p {

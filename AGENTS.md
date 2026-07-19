@@ -35,6 +35,7 @@ Run `npm run build` after changing source content, templates, styles, or config.
 
 - `src/config.json` — site metadata, author, canonical site URL, RSS/sitemap values.
 - `src/about.md` — public About page content.
+- `src/datenschutz.md` — privacy notice (Datenschutzerklärung), rendered to `/datenschutz/` and linked in the footer. Keep it in sync with the actual setup (GitHub Pages hosting, no tracking, no cookies).
 - `src/posts/*.md` — blog posts. There may be no posts yet; that is valid.
 - `src/styles.css` — global styling for generated pages.
 - `scripts/build.js` — the static site generator. It reads `src/`, clears `dist/`, then writes generated HTML, RSS, sitemap, robots, and CSS.

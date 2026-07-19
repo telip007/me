@@ -9,6 +9,7 @@ const SRC_POST_DIR = path.join(process.cwd(), 'src', 'posts');
 const SRC_STYLE = path.join(process.cwd(), 'src', 'styles.css');
 const SRC_FAVICON = path.join(process.cwd(), 'src', 'favicon.svg');
 const SRC_ABOUT = path.join(process.cwd(), 'src', 'about.md');
+const SRC_DATENSCHUTZ = path.join(process.cwd(), 'src', 'datenschutz.md');
 const DIST_DIR = path.join(process.cwd(), 'dist');
 
 const WATCH = process.argv.includes('--watch');
@@ -263,6 +264,8 @@ function renderShell({ title, description, canonicalUrl, bodyClass = '', main, c
       <nav aria-label="Fußzeile">
         <a href="${withBase(config, '/rss.xml')}">RSS</a>
         <a href="${withBase(config, '/sitemap.xml')}">Sitemap</a>
+        <a href="https://github.com/telip007" rel="me">GitHub</a>
+        <a href="${withBase(config, '/datenschutz/')}">Datenschutz</a>
         <a href="#top">Nach oben ↑</a>
       </nav>
     </footer>
@@ -330,11 +333,12 @@ async function writeFileSafe(filePath, content) {
 }
 
 async function build() {
-  const [configRaw, styleText, faviconSvg, aboutRaw] = await Promise.all([
+  const [configRaw, styleText, faviconSvg, aboutRaw, datenschutzRaw] = await Promise.all([
     fsp.readFile(CONFIG_PATH, 'utf8'),
     fsp.readFile(SRC_STYLE, 'utf8'),
     fsp.readFile(SRC_FAVICON, 'utf8'),
-    fsp.readFile(SRC_ABOUT, 'utf8').catch(() => '# Über mich\n\nDiese Seite kann in `src/about.md` bearbeitet werden.')
+    fsp.readFile(SRC_ABOUT, 'utf8').catch(() => '# Über mich\n\nDiese Seite kann in `src/about.md` bearbeitet werden.'),
+    fsp.readFile(SRC_DATENSCHUTZ, 'utf8').catch(() => '# Datenschutz\n\nDiese Seite kann in `src/datenschutz.md` bearbeitet werden.')
   ]);
 
   const config = JSON.parse(configRaw);
@@ -477,6 +481,32 @@ async function build() {
     );
   }
 
+  // Datenschutz page
+  const datenschutzParsed = matter(datenschutzRaw);
+  const datenschutzTitle = datenschutzParsed.data.title || 'Datenschutz';
+  const datenschutzDescription = datenschutzParsed.data.excerpt || datenschutzParsed.data.description || 'Datenschutzerklärung dieser Website.';
+  const datenschutzHtml = md.render(datenschutzParsed.content);
+  const datenschutzMain = `
+    <article class="about">
+      <aside class="page-marker" aria-hidden="true">
+        <span>Datenschutz</span>
+        <span>TG / 02</span>
+      </aside>
+      <div class="about-content">${datenschutzHtml.includes('<h1') ? '' : `<h1>${escapeHtml(datenschutzTitle)}</h1>`}${datenschutzHtml}</div>
+    </article>
+  `;
+  await writeFileSafe(
+    path.join(DIST_DIR, 'datenschutz', 'index.html'),
+    renderShell({
+      title: datenschutzTitle,
+      description: datenschutzDescription,
+      canonicalUrl: ensureAbs(config.siteUrl, '/datenschutz/'),
+      bodyClass: 'about-page',
+      main: datenschutzMain,
+      config,
+    }),
+  );
+
   // Tag pages
   const tags = [...tagSet.entries()];
   for (const [rawTag, slug] of tags) {
@@ -535,6 +565,7 @@ async function build() {
   const urls = [
     '/',
     config.aboutPath,
+    '/datenschutz/',
     '/rss.xml',
     '/sitemap.xml',
     '/robots.txt',
