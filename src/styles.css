@@ -741,7 +741,11 @@ a:focus-visible {
   animation: none;
 }
 
-::view-transition-old(site-header),
+::view-transition-old(site-header) {
+  animation: none;
+  opacity: 0;
+}
+
 ::view-transition-new(site-header) {
   animation: none;
 }
