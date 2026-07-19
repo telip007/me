@@ -8,8 +8,7 @@ description: "Datenschutzerklärung für goeksu.me"
 ## Verantwortlicher
 
 Talip Göksu  
-E-Mail: [talip@goeksu.me](mailto:talip@goeksu.me)  
-GitHub: [github.com/telip007](https://github.com/telip007)
+E-Mail: [talip@goeksu.me](mailto:talip@goeksu.me)
 
 ## Hosting
 
