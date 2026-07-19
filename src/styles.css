@@ -741,6 +741,11 @@ a:focus-visible {
   animation: none;
 }
 
+::view-transition-old(site-header),
+::view-transition-new(site-header) {
+  animation: none;
+}
+
 @keyframes page-leave {
   to {
     opacity: 0;
