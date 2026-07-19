@@ -733,6 +733,14 @@ a:focus-visible {
   navigation: auto;
 }
 
+.site-header {
+  view-transition-name: site-header;
+}
+
+::view-transition-group(site-header) {
+  animation: none;
+}
+
 @keyframes page-leave {
   to {
     opacity: 0;
