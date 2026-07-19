@@ -402,9 +402,6 @@ async function build() {
 
   const indexMain = `
     <section class="intro-block" aria-labelledby="intro-title">
-      <div class="intro-meta">
-        <p class="edition">Ausgabe 01 · Fortlaufend</p>
-      </div>
       <h1 id="intro-title">${escapeHtml(config.siteSubtitle)}</h1>
       <div class="intro-bottom">
         <p class="lead">${escapeHtml(config.siteDescription)}</p>
