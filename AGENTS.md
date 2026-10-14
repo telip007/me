@@ -64,3 +64,15 @@ Run `npm run build` after changing source content, templates, styles, or config.
 - `node_modules/`, `.DS_Store`, logs, and local env files should not be committed.
 - `dist/` is generated output. It is currently ignored; rebuild locally when needed.
 - Do not commit secrets or private notes.
+
+## Bilingual editorial workflow
+
+- Preserve German URLs. English lives under `/en/`, with `/en/articles/`, `/en/tags/`, `/en/about/` and `/en/rss.xml`.
+- Posts use `lang: de|en`, a shared `translationKey`, a locale-specific `slug` and explicit `date`. Missing `lang` remains German.
+- Keep unpublished material in `drafts/` or mark it with the boolean `draft: true`. Drafts must not leak into feeds, sitemap, navigation or alternate-language metadata. Future dates are not a publishing gate.
+- Never include an unrelated untracked user post in a publication commit. Inspect git status and stage only the files explicitly part of the task.
+- About pages are `src/about.md` and `src/about.en.md`. Preserve current public professional links unless asked to remove them. Keep the existing `/datenschutz/` text intact; English links explicitly say it is German.
+- AI assistance is disclosed. Do not claim Talip personally wrote or reviewed each article when work is autonomous. Talip retains responsibility for direction and operation.
+- Ground article claims in linked sources. Original setup/experiment claims require actual evidence. No invented experience, measurements, quotes or citations. New sources and user-supplied topics still require editorial checks.
+- Front matter must remain non-executable YAML or JSON. Do not enable JavaScript parsing or raw Markdown HTML.
+- Run `node --test scripts/build.test.js` and `npm run build` after generator or content-model changes. Tests use temporary fixtures; do not create example articles in the live source directory.

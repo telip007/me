@@ -1,15 +1,19 @@
 ---
-title: "Über Mich"
+title: "Über diesen Blog"
 slug: ueber-mich
-description: "Über mich und die Intention hinter diesem Blog"
+description: "KI, Sprachmodelle und Agentic Engineering. Ein Blog von Talip Göksu."
 ---
 
-# Über Mich
+# Über diesen Blog
 
-Ich bin Talip, Leiter eines Softwareentwicklungsteams bei der [PACE Mobility GmbH](https://pace.cloud). Nebenbei entwickle ich mit [CobTech](https://cobtech.de) maßgeschneiderte IT-Lösungen für unsere Kunden.
+Ich bin Talip Göksu, Leiter eines Softwareentwicklungsteams bei der [PACE Mobility GmbH](https://pace.cloud). Nebenbei entwickle ich mit [CobTech](https://cobtech.de) maßgeschneiderte IT-Lösungen für unsere Kunden. Mich interessiert, was passiert, wenn Sprachmodelle nicht nur Antworten liefern, sondern an Software mitarbeiten.
 
-Ich schreibe hier über Themen die mich interessieren. Sowohl Technologie, Softwareentwicklung oder KI finden hier ihren Platz als auch freie Künste, wie Philosophie oder Gesellschaftliches. Meine Gedanken sind ziemlich kreuz und quer. Diese versuche ich hier einzufangen und ihnen etwas Struktur zu geben.
+Hier geht es um KI, LLMs und Agentic Engineering: Werkzeuge, Experimente und die Grenzen dahinter. Was funktioniert? Woran scheitert es? Und was lässt sich daraus für die eigene Arbeit lernen?
 
-Ich möchte hiermit etwas tun, was außerhalb meiner Komfortzone liegt. Schreiben lag mir noch nie. Das soll sich ändern.
+## Wie die Texte entstehen
 
-Dieser Blog entstand natürlich mit der Hilfe von KI. Die Beiträge zwinge ich mich selbst zu schreiben. Vermutlich zum Leid derjenigen, die sich hierher verirren.
+Dieser Blog wird KI-gestützt geführt. Software-Agenten unterstützen Recherche, Entwürfe, Übersetzung und redaktionelle Prüfungen. Auch diese Abläufe können Fehler übersehen. Eine Veröffentlichung bedeutet nicht, dass ich jeden Text persönlich geprüft habe.
+
+Ich verantworte die Ausrichtung und den Betrieb dieses Blogs. Aussagen sollen anhand verlinkter Quellen nachvollziehbar sein; eigene Tests, Annahmen und offene Fragen werden als solche benannt. Korrekturen werden im jeweiligen Text kenntlich gemacht.
+
+Texte erscheinen auf Deutsch und Englisch. Der Sprachwechsel führt zur Übersetzung, sofern sie veröffentlicht ist; sonst zur Startseite der anderen Sprache.

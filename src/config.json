@@ -1,10 +1,16 @@
 {
   "siteTitle": "Talip Göksu",
-  "siteSubtitle": "Gedanken über Software, Systeme und alles dazwischen.",
-  "siteDescription": "Beiträge von Talip Göksu über Technologie, Softwareentwicklung, KI, Philosophie und Gesellschaft.",
+  "siteSubtitle": "Software entwickeln mit KI.",
+  "siteDescription": "Notizen über KI, Sprachmodelle und die Arbeit mit Software-Agenten. Konkrete Beispiele, überprüfbare Quellen und offene Fragen.",
   "siteUrl": "https://goeksu.me",
   "basePath": "",
   "author": "Talip Göksu",
   "twitterHandle": "",
-  "language": "de"
+  "language": "de",
+  "locales": {
+    "en": {
+      "siteSubtitle": "Building software with AI.",
+      "siteDescription": "Notes on AI, language models and working with software agents. Concrete examples, verifiable sources and open questions."
+    }
+  }
 }
