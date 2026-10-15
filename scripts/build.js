@@ -264,7 +264,6 @@ function renderShell({ title, description, canonicalUrl, bodyClass = '', main, c
 
     <footer class="site-footer">
       <p>© ${new Date().getFullYear()} ${escapeHtml(config.author)}</p>
-      <p class="footer-note">${t.disclosure}</p>
       <nav aria-label="${t.footer}">
         <a href="${withBase(config, config.feedPath)}">RSS</a>
         <a href="${withBase(config, '/sitemap.xml')}">Sitemap</a>
@@ -339,8 +338,8 @@ async function writeFileSafe(filePath, content) {
 }
 
 const LABELS = {
-  de: { notes: 'Notizen', article: 'Text', articles: 'Texte', empty: 'Noch keine Texte veröffentlicht.', emptyDetail: 'Der erste Text erscheint hier, wenn er bereit ist.', readTime: 'Min. Lesezeit', skip: 'Zum Inhalt springen', navigation: 'Hauptnavigation', footer: 'Fußzeile', top: 'Nach oben ↑', about: 'Über diesen Blog', disclosure: 'KI-gestützt · Verantwortlich: Talip Göksu', articleNavigation: 'Artikelnavigation', intro: 'KI, LLMs & Agentic Engineering', edition: 'Beobachtungen aus der Praxis', more: 'Über diesen Blog', topic: 'Thema', topicPosts: 'Texte zum Thema' },
-  en: { notes: 'Notes', article: 'Article', articles: 'Articles', empty: 'No articles published yet.', emptyDetail: 'The first article will appear here when it is ready.', readTime: 'min read', skip: 'Skip to content', navigation: 'Main navigation', footer: 'Footer', top: 'Back to top ↑', about: 'About this blog', disclosure: 'AI-assisted · Responsible: Talip Göksu', articleNavigation: 'Article navigation', intro: 'AI, LLMs & Agentic Engineering', edition: 'Observations from practice', more: 'About this blog', topic: 'Topic', topicPosts: 'Articles about' },
+  de: { notes: 'Notizen', article: 'Text', articles: 'Texte', empty: 'Noch keine Texte veröffentlicht.', emptyDetail: 'Der erste Text erscheint hier, wenn er bereit ist.', readTime: 'Min. Lesezeit', skip: 'Zum Inhalt springen', navigation: 'Hauptnavigation', footer: 'Fußzeile', top: 'Nach oben ↑', about: 'Über diesen Blog', articleNavigation: 'Artikelnavigation', intro: 'KI, LLMs & Agentic Engineering', edition: 'Beobachtungen aus der Praxis', more: 'Über diesen Blog', topic: 'Thema', topicPosts: 'Texte zum Thema' },
+  en: { notes: 'Notes', article: 'Article', articles: 'Articles', empty: 'No articles published yet.', emptyDetail: 'The first article will appear here when it is ready.', readTime: 'min read', skip: 'Skip to content', navigation: 'Main navigation', footer: 'Footer', top: 'Back to top ↑', about: 'About this blog', articleNavigation: 'Article navigation', intro: 'AI, LLMs & Agentic Engineering', edition: 'Observations from practice', more: 'About this blog', topic: 'Topic', topicPosts: 'Articles about' },
 };
 function absolute(config, route) { return ensureAbs(config.siteUrl, withBase(config, route)); }
 function validSlug(value, label) {

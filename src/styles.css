@@ -538,6 +538,20 @@ a:focus-visible {
   margin-bottom: clamp(5rem, 10vw, 10rem);
 }
 
+/* Keep long titles readable and wide article tables inside their content column. */
+.section-heading h2,
+.post-header h1,
+.post-title,
+.tag-page > h1 {
+  overflow-wrap: anywhere;
+}
+
+.post-content table {
+  display: block;
+  max-width: 100%;
+  overflow-x: auto;
+}
+
 .post-header h1 {
   max-width: 12ch;
   margin: clamp(2.5rem, 5vw, 5rem) 0;

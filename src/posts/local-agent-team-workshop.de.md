@@ -30,4 +30,4 @@ Ein automatisierter Check kann das falsche Kriterium erfüllen und dennoch grün
 
 Der Befund ist klein und lokal. Er belegt weder, dass die Ablehnung fachlich in jeder Hinsicht richtig war, noch dass weitere Prüfschritte zuverlässig sind. Er belegt auch keine bessere Produktivität oder allgemeine Qualität des Agententeams. Sichtbar ist nur eine sinnvolle Grenze: Ein Vorschlag kann geprüft und zurückgewiesen werden, bevor er Teil des verwendeten Werkzeugbestands wird.
 
-Dieser Beitrag entstand mit Unterstützung von KI. Die geschilderten Testresultate wurden am 15. Oktober 2026 lokal erneut ausgeführt; die Veröffentlichung dieser Beobachtung macht sie nicht zu einem allgemeinen Qualitätsnachweis.
+Die geschilderten Testresultate wurden am 15. Oktober 2026 lokal erneut ausgeführt; die Veröffentlichung dieser Beobachtung macht sie nicht zu einem allgemeinen Qualitätsnachweis.

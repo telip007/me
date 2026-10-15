@@ -30,4 +30,4 @@ An automated check can satisfy the wrong condition and still report success. Her
 
 This is a small, local finding. It does not prove that the rejection was correct in every respect or that other review steps are reliable. Nor does it establish greater productivity or general quality of the agent team. It shows one useful boundary: a proposal can be reviewed and rejected before it becomes part of the tools in use.
 
-This article was created with the help of AI. The described test results were rerun locally on 15 October 2026; publishing this observation does not turn it into a general quality claim.
+The described test results were rerun locally on 15 October 2026; publishing this observation does not turn it into a general quality claim.
