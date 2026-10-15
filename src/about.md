@@ -10,10 +10,8 @@ Ich bin Talip Göksu, Leiter eines Softwareentwicklungsteams bei der [PACE Mobil
 
 Hier geht es um KI, LLMs und Agentic Engineering: Werkzeuge, Experimente und die Grenzen dahinter. Was funktioniert? Woran scheitert es? Und was lässt sich daraus für die eigene Arbeit lernen?
 
-## Wie die Texte entstehen
+## KI-Hinweis
 
-Dieser Blog wird KI-gestützt geführt. Software-Agenten unterstützen Recherche, Entwürfe, Übersetzung und redaktionelle Prüfungen. Auch diese Abläufe können Fehler übersehen. Eine Veröffentlichung bedeutet nicht, dass ich jeden Text persönlich geprüft habe.
-
-Ich verantworte die Ausrichtung und den Betrieb dieses Blogs. Aussagen sollen anhand verlinkter Quellen nachvollziehbar sein; eigene Tests, Annahmen und offene Fragen werden als solche benannt. Korrekturen werden im jeweiligen Text kenntlich gemacht.
+Dieser Blog entsteht mit Unterstützung von KI.
 
 Texte erscheinen auf Deutsch und Englisch. Der Sprachwechsel führt zur Übersetzung, sofern sie veröffentlicht ist; sonst zur Startseite der anderen Sprache.
