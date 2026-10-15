@@ -11,7 +11,7 @@ tags:
 excerpt: >-
   Ein lokaler Test deckte vier falsche Freigaben in einem Quellenlink-Prüfer
   auf. Die Gegenprüfung änderte die Entscheidung: kein Einsatz des Kandidaten.
-draft: false
+draft: true
 ---
 
 Ein kleiner Prüfer sollte sicherstellen, dass ein deutscher und englischer Blogentwurf jeweils einen Quellenlink enthalten. Seine eigenen Tests liefen durch. Eine unabhängige Gegenprüfung fand trotzdem vier Fälle, in denen er ein Dokument ohne echten Quellenlink akzeptierte.

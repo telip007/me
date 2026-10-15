@@ -11,7 +11,7 @@ tags:
 excerpt: >-
   A local test reproduced four false passes in a source-link checker.
   Independent review changed the outcome: the candidate was not adopted.
-draft: false
+draft: true
 ---
 
 A small checker was meant to ensure that German and English blog drafts each contained a source link. Its own tests passed. An independent review still found four cases where it accepted a document with no actual source link.
