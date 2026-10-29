@@ -4,9 +4,9 @@ Project-specific guidance for future agent sessions working on this repository.
 
 ## Project overview
 
-- This is a tiny static personal blog for Talip Göksu.
-- Content is written in Markdown under `src/` and compiled to plain static HTML in `dist/`.
-- There is intentionally no frontend framework, CMS, admin UI, database, or required client-side JavaScript.
+- This is a small bilingual Markdown personal blog for Talip Göksu, served with FastAPI and progressively enhanced with HTMX.
+- Content is written in Markdown under `src/`. Python/Jinja renders runtime HTML and an optional static export in `dist/`.
+- There is no frontend SPA, CMS, admin UI, database, tracking, or required client-side JavaScript. HTMX enhances an ordinary GET search form.
 - Keep the site simple, fast, readable, and easy to reason about.
 
 ## Important privacy/persona rule
@@ -17,16 +17,21 @@ Project-specific guidance for future agent sessions working on this repository.
 
 ## Commands
 
-- Install dependencies: `npm install`
-- Build site: `npm run build`
-- Watch during development: `npm run dev`
-- Clean generated output: `npm run clean`
+- Install locked dependencies: `uv sync --locked` (Python 3.12+).
+- Run application: `uv run --locked uvicorn blog.main:app --host 127.0.0.1 --port 8000`.
+- Watch development: `npm run dev`.
+- Python tests: `uv run --locked pytest`.
+- Full compatibility suite: `npm test`.
+- Lint: `uv run --locked ruff check blog tests scripts/export.py scripts/check_content.py`.
+- Validate content: `uv run --locked python scripts/check_content.py`.
+- Build static export: `npm run build` or `uv run --locked python scripts/export.py`.
+- Clean generated output: `npm run clean`.
 
-Run `npm run build` after changing source content, templates, styles, or config.
+Run Python tests, `node --test scripts/build.test.js`, and `npm run build` after source, template, route or content-model changes. Use temporary fixtures for article layout checks. Never add example articles to the live source directory.
 
 ## Publishing
 
-- GitHub Pages deployment is configured in `.github/workflows/pages.yml`.
+- GitHub Pages static compatibility deployment is configured in `.github/workflows/pages.yml`. FastAPI is the primary application; GitHub Pages cannot execute ASGI or server search.
 - Pushes to `main` build the site and deploy the generated `dist/` artifact.
 - The repository is published with the GitHub Pages custom domain `goeksu.me`.
 - Keep `src/config.json` `siteUrl` and `basePath` in sync. With the custom domain, `basePath` should remain empty. Use `/me` only if the site is moved back to `https://telip007.github.io/me`.
@@ -37,8 +42,13 @@ Run `npm run build` after changing source content, templates, styles, or config.
 - `src/about.md` — public About page content.
 - `src/datenschutz.md` — privacy notice (Datenschutzerklärung), rendered to `/datenschutz/` and linked in the footer. Keep it in sync with the actual setup (GitHub Pages hosting, no tracking, no cookies).
 - `src/posts/*.md` — blog posts. There may be no posts yet; that is valid.
-- `src/styles.css` — global styling for generated pages.
-- `scripts/build.js` — the static site generator. It reads `src/`, clears `dist/`, then writes generated HTML, RSS, sitemap, robots, and CSS.
+- `blog/static/site.css` — responsive styling shared by runtime and export; local fonts/licenses live in `blog/static/fonts/`.
+- `blog/content.py` — safe content parsing, Markdown rendering and route/translation validation.
+- `blog/main.py` — FastAPI application factory, Jinja responses, search, feeds and metadata.
+- `blog/templates/` — shared HTML templates.
+- `blog/export.py` — static export using the same application renderer.
+- `scripts/build.js` — Node compatibility wrapper around the Python exporter; do not recreate a second renderer.
+- `docs/editorial-guide.md` and `docs/research/` — writing policy and source-backed research.
 - `scripts/clean.js` — removes generated output.
 - `src/favicon.svg` — source favicon copied into generated output.
 - `.github/workflows/pages.yml` — GitHub Pages build/deploy workflow.
@@ -53,10 +63,12 @@ Run `npm run build` after changing source content, templates, styles, or config.
 
 ## Implementation conventions
 
-- Prefer straightforward Node.js and plain HTML generation over adding dependencies.
+- Prefer straightforward Python, Jinja HTML and progressive HTMX over a client-side framework. Keep dependencies deliberate and locked with uv.
+- Search must keep an ordinary GET fallback; static export omits controls requiring the server.
+- Preserve full-document history responses, HTMX cache variation, local assets, keyboard access and reduced motion.
 - Keep generated markup semantic and accessible.
 - Escape public text before injecting it into templates.
-- Keep RSS, sitemap, metadata, and navigation consistent when changing routes.
+- Keep RSS, sitemap, metadata, and navigation consistent when changing routes. Validate the content graph before serving or replacing export output.
 - Avoid exposing implementation-only details on public pages unless they are part of the intended editorial voice.
 
 ## Git and generated files

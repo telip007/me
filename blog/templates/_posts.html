@@ -1,0 +1,16 @@
+{% set heading_level = 2 if page_type == 'tag' else 3 %}
+<div id="posts" class="post-results" data-result-count="{{ result_count }}" data-result-label="{{ result_count }} {{ ('Text' if result_count == 1 else 'Texte') if lang == 'de' else ('article' if result_count == 1 else 'articles') }}">
+{% if posts %}
+  <p class="result-count">{{ result_count }} {{ ('Text' if result_count == 1 else 'Texte') if lang == 'de' else ('article' if result_count == 1 else 'articles') }}{% if q %} {{ 'für' if lang == 'de' else 'for' }} „{{ q }}“{% endif %}</p>
+  <div class="post-list">{% for item in posts %}
+    <article class="post-row">
+      <div class="row-meta"><time datetime="{{ item.date }}">{{ item.date_label }}</time><span>{{ item.read_time }} {{ 'Min. Lesezeit' if lang == 'de' else 'min read' }}</span></div>
+      <div class="row-copy"><h{{ heading_level }}><a class="post-title-link" href="{{ url(item.url) }}"><span>{{ item.title }}</span><svg aria-hidden="true" viewBox="0 0 24 24"><path d="M5 12h14m-6-6 6 6-6 6"/></svg></a></h{{ heading_level }}><p>{{ item.excerpt }}</p><ul class="tag-list" aria-label="{{ 'Themen' if lang == 'de' else 'Topics' }}">{% for name in item.tags %}<li><a href="{{ tag_url(name) }}">{{ name }}</a></li>{% endfor %}</ul></div>
+    </article>
+  {% endfor %}</div>
+{% elif q or tag %}
+  <div class="empty-state"><h{{ heading_level }}>{{ 'Keine passenden Texte.' if lang == 'de' else 'No matching articles.' }}</h{{ heading_level }}><p>{{ 'Versuche einen anderen Begriff oder wähle alle Themen.' if lang == 'de' else 'Try another keyword or choose all topics.' }}</p><a class="text-link" href="{{ home_url }}">{{ 'Alle Texte anzeigen' if lang == 'de' else 'Show all writing' }}</a></div>
+{% else %}
+  <div class="empty-state"><h{{ heading_level }}>{{ 'Noch keine Beiträge.' if lang == 'de' else 'No posts yet.' }}</h{{ heading_level }}><p>{{ 'Der erste Text erscheint hier, wenn er bereit ist.' if lang == 'de' else 'The first article will appear here when it is ready.' }}</p></div>
+{% endif %}
+</div>

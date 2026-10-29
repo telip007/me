@@ -55,7 +55,7 @@ test('drafts never leak through pages, feed, sitemap or translation links', asyn
   await fs.mkdir(path.join(root, 'drafts'));
   await fs.writeFile(path.join(root, 'drafts/unpublished.md'), 'PRIVATE_DRAFT_MARKER');
   await build(root);
-  assert.match(await read('en/index.html'), /No articles published yet/);
+  assert.match(await read('en/index.html'), /No posts yet\./);
   await assert.rejects(read('en/articles/hidden/index.html'), /ENOENT/);
   for (const file of ['index.html', 'en/index.html', 'rss.xml', 'en/rss.xml', 'sitemap.xml', 'texte/public/index.html']) {
     const html = await read(file);
@@ -128,7 +128,7 @@ test('escapes quotes in image and social metadata instead of creating attributes
   await post('quoted.md', `slug: quoted\nimage: ${JSON.stringify(image)}`);
   await build(root);
   const page = await read('texte/quoted/index.html');
-  assert.match(page, /property="og:image" content="https:\/\/example.test\/photo.jpg&quot; onload=&quot;alert\(1\)"/);
-  assert.match(page, /name="twitter:creator" content="@example&quot; onmouseover=&quot;alert\(2\)"/);
+  assert.match(page, /property="og:image" content="https:\/\/example.test\/photo.jpg(?:&quot;|&#34;) onload=(?:&quot;|&#34;)alert\(1\)"/);
+  assert.match(page, /name="twitter:creator" content="@example(?:&quot;|&#34;) onmouseover=(?:&quot;|&#34;)alert\(2\)"/);
   assert.doesNotMatch(page, /content="[^"]*" on(?:load|mouseover)=/);
 });

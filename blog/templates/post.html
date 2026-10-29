@@ -1,0 +1,17 @@
+{% extends 'base.html' %}
+{% block content %}
+<article class="article">
+  <header class="article-header">
+    <a class="back-link" href="{{ home_url }}"><svg viewBox="0 0 20 20" aria-hidden="true"><path d="M17 10H4m5-5-5 5 5 5"/></svg>{{ 'Alle Texte' if lang == 'de' else 'All writing' }}</a>
+    <div class="article-meta"><time datetime="{{ post.date }}">{{ post.date_label }}</time><span>{{ post.read_time }} {{ 'Min. Lesezeit' if lang == 'de' else 'min read' }}</span>{% if post.updated and post.updated != post.date %}<span>{{ 'Aktualisiert' if lang == 'de' else 'Updated' }} <time datetime="{{ post.updated }}">{{ post.updated }}</time></span>{% endif %}</div>
+    <h1>{{ post.title }}</h1>
+    <p class="article-deck">{{ post.excerpt }}</p>
+    <div class="article-byline"><span>{{ config.author }}</span><ul class="tag-list" aria-label="{{ 'Themen' if lang == 'de' else 'Topics' }}">{% for name in post.tags %}<li><a href="{{ tag_url(name) }}">{{ name }}</a></li>{% endfor %}</ul></div>
+  </header>
+  <div class="reading-layout">
+    {% if post.toc %}<aside class="contents"><details open><summary>{{ 'In diesem Text' if lang == 'de' else 'On this page' }}</summary><nav aria-label="{{ 'Inhaltsverzeichnis' if lang == 'de' else 'Table of contents' }}"><ol>{% for heading in post.toc %}<li class="toc-level-{{ heading.level }}"><a href="#{{ heading.id }}">{{ heading.title }}</a></li>{% endfor %}</ol></nav></details></aside>{% endif %}
+    <div class="prose article-body">{{ post.html }}</div>
+  </div>
+  <nav class="article-pagination" aria-label="{{ 'Artikelnavigation' if lang == 'de' else 'Article navigation' }}">{% if previous_post %}<a href="{{ url(previous_post.url) }}"><span>{{ 'Vorheriger Text' if lang == 'de' else 'Previous article' }}</span><strong>{{ previous_post.title }}</strong></a>{% endif %}{% if next_post %}<a href="{{ url(next_post.url) }}"><span>{{ 'Nächster Text' if lang == 'de' else 'Next article' }}</span><strong>{{ next_post.title }}</strong></a>{% endif %}<a href="{{ home_url }}"><span>{{ 'Weiterlesen' if lang == 'de' else 'Keep reading' }}</span><strong>{{ 'Alle Texte' if lang == 'de' else 'All writing' }}</strong></a></nav>
+</article>
+{% endblock %}

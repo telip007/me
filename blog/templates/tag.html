@@ -1,0 +1,4 @@
+{% extends 'base.html' %}
+{% block content %}
+<section class="topic-page"><a class="back-link" href="{{ home_url }}">{{ 'Alle Texte' if lang == 'de' else 'All writing' }}</a><h1>{{ title }}</h1>{% include '_posts.html' %}</section>
+{% endblock %}

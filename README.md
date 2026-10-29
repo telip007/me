@@ -1,61 +1,101 @@
 # Personal blog
 
-A small bilingual static blog about AI, LLMs and agentic engineering. Markdown in `src/` becomes plain HTML in `dist/`. No frontend framework, CMS or required browser JavaScript.
+Talip Göksu's bilingual Markdown blog, rewritten in **FastAPI, Jinja and HTMX**. Python validates the public content graph and renders both HTTP pages and the optional static export. There is no database, CMS, account system, tracking or required browser JavaScript.
 
-## Build and test
+## Run locally
+
+Install Python 3.12+ and [uv](https://docs.astral.sh/uv/getting-started/installation/), then:
 
 ```sh
-npm ci
-npm run build
-node --test scripts/build.test.js
-npm run dev
+uv sync --locked
+uv run --locked uvicorn blog.main:app --host 127.0.0.1 --port 8000
 ```
 
-The tests build temporary fixture sites. They cover language routes, translation links, draft exclusion, metadata, feeds, privacy links and unsafe front matter. `npm run dev` watches source files. `npm run clean` removes generated output.
+Open http://127.0.0.1:8000. `npm run dev` is a convenience command with automatic reload for Python, Markdown, configuration, templates and browser assets. Production loads and validates content once at startup; restart the process after changing content. Invalid published metadata fails startup rather than serving a partial publication.
 
-## Content
+```sh
+uv run --locked pytest
+uv run --locked ruff check blog tests scripts/export.py scripts/check_content.py
+uv run --locked python scripts/check_content.py
+uv run --locked python scripts/export.py
+```
 
-Published articles live in `src/posts/*.md`. Each translation is a separate file:
+The existing Node command interface is preserved: `npm test` runs the Python suite and the original export contract tests; `npm run build` exports to `dist/`; `npm run clean` removes it. Node has no runtime dependencies and is optional for running FastAPI.
+
+## Architecture
+
+- `blog/content.py`: data-only front matter, Markdown rendering, heading anchors/contents, validated route and translation registry.
+- `blog/main.py`: application factory, localized pages, GET search/topic filtering, RSS/sitemap/robots, health endpoint and response policies.
+- `blog/export.py`: static export through the same application rendering path.
+- `blog/templates/`: semantic Jinja shell, index/results, article, topic, page and 404 templates.
+- `blog/static/`: responsive CSS, local HTMX, minimal interaction helpers and licensed self-hosted fonts. See [asset provenance](blog/static/ASSETS.md).
+- `src/`: original Markdown, site configuration and favicon. No template code in content.
+- `tests/`: isolated temporary fixture sites, never example posts in publication sources.
+- `scripts/build.js`: compatibility wrapper, **not a second generator**.
+
+Search enhances an ordinary GET form. HTMX replaces only the result list, preserves the focused input, updates an accessible count and uses a URL that also works without JavaScript. The backend varies responses on HTMX headers and returns full HTML for history restoration. No boosted navigation or browser history snapshots. Search failures leave the previous results visible with a recovery message. Article navigation, source links, language changes and RSS remain native links.
+
+## Content and language URLs
+
+Published articles live in `src/posts/*.md`; translations are separate files:
 
 ```yaml
 ---
 title: "A concrete article title"
-date: "2026-10-14"
+date: "2026-10-29"
 lang: en
 translationKey: stable-topic-key
 slug: english-article-slug
 tags: [LLM]
-excerpt: "A short description of the article."
+excerpt: "The specific question this article answers."
 draft: true
 ---
 ```
 
-- `lang` is `de` or `en`; omitted means German for compatibility.
-- Both versions share `translationKey`, but have their own title, excerpt, tags and slug. There can be only one published article per language and key.
-- Slugs and translation keys use lowercase letters, digits and hyphens.
-- `draft: true` excludes a file from **all** production pages, feeds, sitemap and translation links. The flag must be a YAML boolean, not a quoted string. `drafts/` and other directories outside `src/posts/` are never built.
-- New articles should always set `date`. Undated legacy files use their file modification date; this is a compatibility fallback, not a publication schedule. Future dates do not schedule or hide articles: use `draft: true` until publication.
-- YAML and JSON front matter are supported. Executable front-matter languages are rejected before parsing. Raw HTML in article Markdown is disabled.
-- A language switch opens the corresponding published translation, or the other language’s homepage. Only real counterparts receive `hreflang` links. Tag pages pair only when the tag label is identical in both languages.
+This is a documentation example, not a published article.
 
-DE URLs remain `/`, `/texte/<slug>/`, `/themen/<tag>/`, `/ueber-mich/`, `/rss.xml`. English uses `/en/`, `/en/articles/<slug>/`, `/en/tags/<tag>/`, `/en/about/`, `/en/rss.xml`. `/about/` still redirects to the German About page. One sitemap lists both languages.
+- `lang` is `de` or `en`; omitted means German. Shared `translationKey`, separate titles/excerpts/slugs. At most one published counterpart per language and key.
+- Set an explicit date on new articles. Future dates do not schedule publication: use boolean `draft: true` until ready.
+- `draft: true` excludes a file from pages, search, tags, translation links, feeds and sitemap. `drafts/` is never read. Quoted/nonboolean draft flags are rejected.
+- YAML/JSON are data only. Executable front matter is rejected and raw Markdown HTML is escaped. Duplicate routes and ambiguous metadata fail before export replaces the previous output.
+- The language switch opens a published counterpart, or the other language's homepage. Only actual counterparts receive alternate-language metadata. Tag translations pair only when labels match exactly.
+- `updated` records a substantive correction, not a cosmetic change. Use `featured` only as editorial data; the design does not manufacture a featured article.
 
-## Editorial practice
+| German | English |
+| --- | --- |
+| `/` | `/en/` |
+| `/texte/<slug>/` | `/en/articles/<slug>/` |
+| `/themen/<tag>/` | `/en/tags/<tag>/` |
+| `/ueber-mich/` | `/en/about/` |
+| `/rss.xml` | `/en/rss.xml` |
 
-The blog uses AI assistance for research, drafting, translation and editorial checks. Talip Göksu is responsible for its direction and operation. Publication must not be described as a personal review by Talip unless that review actually happened.
+`/about/` redirects to the German About page. One sitemap contains both languages. There is no archive. An empty index is valid; no unfinished article is published to fill a design.
 
-Use primary sources where possible, link claims to the supporting passage and distinguish source reports from our own observations. Coverage can include new research, useful work by practitioners and our own agent setup, but claims about that setup need actual local evidence. Do not invent experiments, benchmark results or personal experience. Reader-supplied topics can enter the same research and review process. Expand the source list when useful; free access and a famous author do not by themselves establish reliability. Keep corrections visible and avoid confident claims that the evidence does not support.
+## Writing and design research
 
-Drafts are prepared and checked before being promoted into `src/posts/`. Publication is separate from generation; do not publish unrelated local files or a user’s untracked drafts as part of a source change.
+Read the [editorial guide](docs/editorial-guide.md) before drafting or publishing. It includes reader briefs, explanation/investigation/tutorial outlines, a claim ledger, editing passes, feedback prompts, translation parity and publication checks. It applies the requested Pragmatic Engineer article alongside Google, Microsoft, Julia Evans, Diátaxis and MDN; it does not impose boilerplate article sections.
 
-## About, privacy and configuration
+The source-linked [editorial research](docs/research/editorial.md) and [design research](docs/research/design.md) record findings checked on 29 October 2026, including original engineering blogs and platform standards. [DESIGN.md](DESIGN.md) records implementation decisions. Primary sources support factual claims; original experiments require actual artifacts. Do not invent experience, measurements, quotes, human review or citations. Keep private notes outside public copy. Do not add blanket AI notices to articles or shared templates. Existing About copy is preserved.
 
-Edit `src/about.md` and `src/about.en.md` for the two About pages. The existing German privacy notice remains at `/datenschutz/`; English pages explicitly label its link “Privacy (German)”. Its legal wording is not automatically translated or expanded.
+## Configuration and privacy
 
-`src/config.json` contains shared metadata and English overrides in `locales.en`. `siteUrl` is the origin (`https://goeksu.me`), and `basePath` is empty on the custom domain. For a repository subpath, use an origin such as `https://telip007.github.io` with `basePath: "/me"`; do not include the subpath twice.
+`src/config.json` contains site metadata, public author and English overrides in `locales.en`. `siteUrl` is an HTTP(S) origin; `basePath` is empty for `https://goeksu.me`. A repository subpath uses origin `https://telip007.github.io` and `basePath: "/me"`. FastAPI mounts the same prefix for runtime URLs; the exporter writes paths appropriate to the hosting root.
 
-## Publishing
+The existing German privacy notice at `/datenschutz/` is preserved. English links label it “Privacy (German)”. No cookies, analytics, third-party font requests or external script CDNs are introduced. The privacy notice currently describes **GitHub Pages**. Before a public FastAPI host cutover, choose the host, review its actual data processing and update that hosting text accordingly. A local runtime does not establish a new public host or alter the current published notice.
 
-Pushes to `main` deploy the generated artifact through `.github/workflows/pages.yml`. Build and test first. Do not edit or commit `dist/`, `node_modules/`, credentials or private notes. The generator rejects duplicate routes and invalid article metadata before replacing output.
+## Runtime deployment and static compatibility
 
-Code is MIT-licensed. Articles and personal content are © Talip Göksu, all rights reserved unless stated otherwise.
+FastAPI is the primary runtime. A container definition is included:
+
+```sh
+docker build -t personal-blog .
+docker run --rm -p 8000:8000 personal-blog
+```
+
+Run behind your chosen HTTPS reverse proxy. The image runs as a non-root user; use its health endpoint for readiness. Keep credentials and private drafts out of the image/build context. Do not grant forwarded-header trust to arbitrary public clients. The application does not need a database, outbound browser services or writable persistent storage.
+
+**GitHub Pages cannot run FastAPI.** The existing Pages workflow therefore remains an explicit static compatibility path: it installs the locked Python dependencies, runs tests, and exports the same rendered routes to `dist/`. Static pages omit dynamic search controls and HTMX; topics and native navigation continue working. A push to `main` still publishes that export. Hosting the full HTMX search experience requires deploying the ASGI application to a Python-capable host. This task does not perform that cutover or publish changes.
+
+Do not commit `dist/`, `.venv/`, private source material or credentials. The original untracked user article is deliberately outside this rewrite.
+
+Code is MIT-licensed. Articles and personal content are © Talip Göksu, all rights reserved unless stated otherwise. Vendored fonts and HTMX retain their own included licenses.

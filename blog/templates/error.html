@@ -1,0 +1,4 @@
+{% extends 'base.html' %}
+{% block content %}
+<section class="error-state"><p class="error-code">404</p><h1>{{ 'Diese Seite gibt es nicht.' if lang == 'de' else 'This page could not be found.' }}</h1><p>{{ 'Vielleicht hat sich die Adresse geändert. Auf der Startseite findest du alle veröffentlichten Texte.' if lang == 'de' else 'The address may have changed. You can find all published writing on the homepage.' }}</p><a class="button-link" href="{{ home_url }}">{{ 'Zur Startseite' if lang == 'de' else 'Go to homepage' }}</a></section>
+{% endblock %}

@@ -1,16 +1,13 @@
 {
   "name": "personal-blog",
-  "version": "1.0.0",
+  "version": "2.0.0",
   "private": true,
   "type": "module",
-  "description": "A tiny static markdown-driven personal blog.",
+  "description": "A bilingual Markdown blog served with FastAPI and HTMX.",
   "scripts": {
     "build": "node scripts/build.js",
-    "dev": "node scripts/build.js --watch",
+    "dev": "uv run --locked uvicorn blog.main:app --reload --host 127.0.0.1 --port 8000 --reload-include \"*.md\" --reload-include \"*.json\" --reload-include \"*.html\" --reload-include \"*.css\" --reload-include \"*.js\"",
+    "test": "uv run --locked pytest && node --test scripts/build.test.js",
     "clean": "node scripts/clean.js"
-  },
-  "dependencies": {
-    "gray-matter": "^4.0.3",
-    "markdown-it": "^14.1.0"
   }
 }

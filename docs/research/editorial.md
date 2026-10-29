@@ -1,0 +1,48 @@
+# Editorial research
+
+Research date: 29 October 2026. Scope: a bilingual personal engineering blog, with the user's requested writing article as the starting point. Sources were read directly on their authors' or maintainers' websites. This is a practical synthesis, not a literature review or a claim that these rules guarantee readership.
+
+The recommendations below use material available by October 2026. The web contains living documents: this records the pages observed on the research date, not an independently archived historical edition. Orosz's article explicitly states its original and update dates; Microsoft's page explicitly lists its July 2026 update. Undated guides are identified as such instead of assigning invented publication dates.
+
+## Source findings and project decisions
+
+| Source and date | What the source supports | Application to this blog |
+| --- | --- | --- |
+| [Gergely Orosz: Becoming a Better Writer as a Software Engineer](https://blog.pragmaticengineer.com/becoming-a-better-writer-in-tech/), 18 January 2022, updated 24 October 2023; sections “Editing Approaches,” “Get Feedback,” and “Build Writing Habits” | Drafting, editing, and targeted feedback are separate activities. Short paragraphs, fewer distractions, useful diagrams, and deliberate practice reduce the reader's work. | Require a reader-value statement, a structural edit, and specific review questions. Use a diagram when it explains a mechanism better than prose. Treat writing tools as suggestions requiring judgment. |
+| [Google Technical Writing: Audience](https://developers.google.com/tech-writing/one/audience), living course material, read 29 October 2026; “Define your audience,” “Curse of knowledge,” and “Cultural neutrality and idioms” | Readers' roles alone do not establish their knowledge. Familiarity with a project and international language context matter. | Note prerequisites in the draft brief; define unfamiliar terms where needed; avoid translating English idioms literally into German. |
+| [Google Technical Writing: Documents](https://developers.google.com/tech-writing/one/documents), living course material, read 29 October 2026; “State your document's scope,” “Summarize key points at the start,” and “Organize the document to meet your audience's needs” | A clear scope, early answers, and organization around reader goals help readers navigate long documents. | Open with the concrete finding and its relevance. State an important limitation when omitting it would mislead. Order sections by questions the reader needs answered. |
+| [Microsoft: Top 10 tips for Microsoft style and voice](https://learn.microsoft.com/en-us/style-guide/top-10-tips-style-voice), updated 6 July 2026; “Write like you speak,” “Get to the point fast,” and “Revise weak writing” | Direct language, useful information first, sentence-style headings, and removing weak phrasing improve clarity. | Prefer concrete verbs and understated titles. Read the introduction aloud. Keep technical precision even when a shorter alternative sounds smoother. |
+| [Julia Evans: Blog about what you've struggled with](https://jvns.ca/blog/2021/05/24/blog-about-what-you-ve-struggled-with/), 24 May 2021; “it's not about the struggle, it's about what you learned” and “write it down while you still remember what was hard” | A specific obstacle can reveal a useful lesson; the lesson matters more than the difficulty alone. Fresh notes preserve the confusing detail. | Prefer a reproducible bug, consequential tradeoff, or explanation of one confusing mechanism over a generic technology overview. Never manufacture a personal struggle or imply Talip performed an experiment without evidence. |
+| [Diátaxis: Start here](https://www.diataxis.fr/start-here/), living handbook, read 29 October 2026; “The four kinds of documentation” | Tutorials, how-to guides, reference, and explanation serve different reader needs. | Choose a primary purpose before drafting. An essay may explain a tradeoff; a how-to must deliver a task. This is an editorial aid, not a requirement to add four navigation categories. |
+| [Diátaxis: As a guide to work](https://www.diataxis.fr/how-to-use-diataxis/), living handbook, read 29 October 2026; “Don't worry about structure” | The framework should guide improvement rather than lead to empty structures. | Do not create empty series, category landing pages, or example articles simply to fill a design. |
+| [Google: Write accessible documentation](https://developers.google.com/style/accessibility), living style guide, read 29 October 2026; “Headings and titles,” “Links,” and “Images” | Semantic headings, meaningful link labels, text equivalents, and suitable alternative text support navigation and access. | Use descriptive section titles and source links; keep code and terminal output as text; explain the information carried by a diagram in adjacent prose. |
+| [Google: Code samples](https://developers.google.com/style/code-samples), living style guide, read 29 October 2026; “Basic guidelines” | Code omissions should be explicit; long lines and misleading copyable fragments hinder use. | Introduce each snippet, label partial examples, and avoid presenting an incomplete fragment as runnable. |
+| [MDN: Guidelines for writing code examples](https://developer.mozilla.org/en-US/docs/MDN/Writing_guidelines/Code_style_guide), living maintainer guide, read 29 October 2026; “General principles for code examples” | Readers may put samples into production. Examples need testing, setup information, and clear limits. | Verify runnable examples in the stated environment, preserve the command and result in editorial notes, and mark intentional simplifications. |
+
+## What changes in the editorial process
+
+These are project decisions inferred from the sources and repository constraints; they are not quotations or claims that the source authors prescribe this exact workflow.
+
+1. **Start from a reader decision.** Before a draft, finish “After reading, a developer facing ___ can ___ because ___.” If the proposed answer is only “knows that this tool exists,” narrow the topic until it explains an actual mechanism, changes a choice, or enables a task.
+2. **Separate public explanation from evidence bookkeeping.** Keep source dates, tested revisions, commands, results, and uncertainty in private draft notes. Publish enough detail for a reader to assess and reproduce the claim, without turning the article into an internal audit transcript.
+3. **Edit substance before sentences.** First remove claims unsupported by the evidence and sections unrelated to the question. Then improve sequence, examples, and language. Final polish cannot rescue an unsupported conclusion.
+4. **Use review questions with an answer.** Ask “What decision can you make after reading?”, “Which step cannot you reproduce?”, and “Where does this claim exceed its evidence?” A generic request for approval hides these distinct checks.
+5. **Make bilingual review substantive.** Both locales must retain the same conclusion, conditions, uncertainty, and supporting sources. A polished translation that strengthens the original claim fails review.
+6. **Treat the empty state as valid.** At baseline both checked-in workshop articles have `draft: true`. Keeping them unpublished is a content decision; a visual redesign provides no reason to promote them. Do not add a fabricated portfolio of articles.
+
+## Useful tensions and rejected shortcuts
+
+- Orosz discusses bold emphasis for scanning, but repeated emphasis would compete with this blog's quiet reading hierarchy. Prefer clear headings and topic sentences; reserve emphasis for an actual distinction.
+- Microsoft's brevity principle is useful direction, not a universal rule that the fewest words are always best. Keep a prerequisite or limitation if removing it changes what a claim means.
+- Sentence-length and readability scores can flag awkward prose; neither proves an accurate or intelligible explanation. Avoid a hard word-count gate for English or German.
+- Diátaxis describes documentation needs. A personal essay need not mimic a reference manual. Use the distinction to clarify intent, without converting the blog into a documentation portal.
+- Evans's example is an invitation to find useful lessons, not permission to invent autobiographical experience. Source-based analysis remains valuable when clearly attributed.
+- A weekly practice can produce notes or drafts. It does not require a weekly publication quota or justify shallow posts.
+- Paid tools and career outcomes mentioned by sources were not evaluated. No purchase, subscription, reach prediction, or career guarantee follows from this research.
+- A link's existence does not establish that it supports the adjacent claim. A green URL check or a translation check cannot replace editorial reading.
+
+## Implementation handoff
+
+The reusable policy, article outline, claim ledger, and release checklist are in [the editorial guide](../editorial-guide.md). They belong in repository documentation and draft workflows. Avoid injecting editorial checklists, internal review status, blanket AI notices, or infrastructure details into every public article.
+
+The interface should support the writing: a specific title and excerpt; honest publication metadata; semantic article structure; readable code; direct section links; accessible diagrams; and language alternatives only when a published counterpart exists. These are editorial product recommendations. Whether a particular template implements them is established by code and rendered checks, not by this research document.

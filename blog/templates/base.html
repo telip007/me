@@ -1,0 +1,65 @@
+<!doctype html>
+<html lang="{{ lang }}" id="top">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{{ title }}{% if title != config.siteTitle %} | {{ config.siteTitle }}{% endif %}</title>
+  <meta name="description" content="{{ description }}">
+  <meta name="robots" content="{{ 'noindex,follow' if noindex or page_type == 'error' else 'index,follow' }}">
+  <meta name="theme-color" content="#fbfcff">
+  <meta name="color-scheme" content="light">
+  <link rel="canonical" href="{{ canonical }}">
+  {% for code, href in alternates.items() %}<link rel="alternate" hreflang="{{ code }}" href="{{ href }}">{% endfor %}
+  <link rel="alternate" type="application/rss+xml" title="{{ config.siteTitle }} — {{ lang|upper }}" href="{{ feed_url }}">
+  <link rel="icon" href="{{ url('/favicon.svg') }}" type="image/svg+xml">
+  <link rel="preload" href="{{ url('/static/fonts/Manrope.woff2') }}?v=0366ccbf579b" as="font" type="font/woff2" crossorigin>
+  <link rel="stylesheet" href="{{ url('/static/site.css') }}?v={{ asset_version }}">
+  <meta property="og:site_name" content="{{ config.siteTitle }}">
+  <meta property="og:title" content="{{ title }}">
+  <meta property="og:description" content="{{ description }}">
+  <meta property="og:url" content="{{ canonical }}">
+  <meta property="og:type" content="{{ 'article' if post is defined else 'website' }}">
+  <meta property="og:locale" content="{{ 'de_DE' if lang == 'de' else 'en_GB' }}">
+  <meta name="twitter:card" content="{{ 'summary_large_image' if post is defined and post.image else 'summary' }}">
+  <meta name="twitter:title" content="{{ title }}">
+  <meta name="twitter:description" content="{{ description }}">
+  {% if config.twitterHandle %}<meta name="twitter:creator" content="{{ config.twitterHandle }}">{% endif %}
+  {% if post is defined %}
+  <meta property="article:published_time" content="{{ post.date }}">
+  <meta property="article:modified_time" content="{{ post.updated or post.date }}">
+  {% if post.image %}<meta property="og:image" content="{{ post.image }}"><meta name="twitter:image" content="{{ post.image }}">{% endif %}
+  {% endif %}
+  <script type="application/ld+json">{{ json_ld|safe }}</script>
+  {% if not static_export and page_type == 'home' and all_posts %}
+  <meta name="htmx-config" content='{"allowEval":false,"allowScriptTags":false,"selfRequestsOnly":true,"historyCacheSize":0,"includeIndicatorStyles":false}'>
+  <script src="{{ url('/static/htmx.min.js') }}?v={{ asset_version }}" defer></script>
+  {% endif %}
+  {% if post is defined or (page_type == 'home' and all_posts and not static_export) %}<script src="{{ url('/static/site.js') }}?v={{ asset_version }}" defer></script>{% endif %}
+</head>
+<body class="{{ page_type }}-page" hx-history="false" data-static-export="{{ 'true' if static_export else 'false' }}">
+  <a class="skip-link" href="#content">{{ 'Zum Inhalt springen' if lang == 'de' else 'Skip to content' }}</a>
+  <div class="site-wrap">
+    <header class="site-header">
+      <a class="identity" href="{{ home_url }}" aria-label="{{ config.siteTitle }} — {{ 'Startseite' if lang == 'de' else 'Home' }}">
+        <svg class="identity-mark" aria-hidden="true" viewBox="0 0 32 32"><path d="M8 7h17v5H8zm0 0h5v17h-5zm5 17h12v5H13z" fill="currentColor"/></svg>
+        <span>{{ config.siteTitle }}</span>
+      </a>
+      <nav class="site-nav" aria-label="{{ 'Hauptnavigation' if lang == 'de' else 'Main navigation' }}">
+        <a href="{{ home_url }}"{% if page_type == 'home' or page_type == 'tag' or page_type == 'post' %} aria-current="{{ 'page' if page_type == 'home' else 'true' }}"{% endif %}>{{ 'Texte' if lang == 'de' else 'Writing' }}</a>
+        <a href="{{ about_url }}"{% if request.url.path.rstrip('/') == about_url.rstrip('/') %} aria-current="page"{% endif %}>{{ 'Über diesen Blog' if lang == 'de' else 'About this blog' }}</a>
+        <a class="language-switch" href="{{ switch_url }}" hreflang="{{ other_lang }}" lang="{{ other_lang }}" aria-label="{{ 'EN: Read in English' if other_lang == 'en' else 'DE: Auf Deutsch lesen' }}">{{ other_lang|upper }}</a>
+      </nav>
+    </header>
+    <main id="content" tabindex="-1">{% block content %}{% endblock %}</main>
+    <footer class="site-footer">
+      <div><p class="footer-name">{{ config.siteTitle }}</p><p>{{ 'KI, LLMs und Agentic Engineering.' if lang == 'de' else 'AI, LLMs and agentic engineering.' }}</p></div>
+      <nav aria-label="{{ 'Fußzeile' if lang == 'de' else 'Footer' }}">
+        <a href="{{ feed_url }}">RSS</a>
+        <a href="https://github.com/telip007" rel="me">GitHub</a>
+        <a href="{{ privacy_url }}" lang="de">{{ 'Datenschutz' if lang == 'de' else 'Privacy (German)' }}</a>
+        <a class="back-top" href="#top">{{ 'Nach oben' if lang == 'de' else 'Back to top' }} <svg aria-hidden="true" viewBox="0 0 16 16"><path d="M8 13V3m-4 4 4-4 4 4"/></svg></a>
+      </nav>
+    </footer>
+  </div>
+</body>
+</html>

@@ -1,3 +1,5 @@
+# Optional static publication from the same Python renderer.
+# GitHub Pages cannot run FastAPI. Search is intentionally omitted in this export.
 name: Deploy GitHub Pages
 
 on:
@@ -23,27 +25,24 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
-
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
+      - name: Setup Python and uv
+        uses: astral-sh/setup-uv@v6
         with:
-          node-version: 22
-          cache: npm
-
-      - name: Install dependencies
-        run: npm ci
-
-      - name: Build site
-        run: npm run build
-
+          version: "0.12.5"
+          enable-cache: true
+          python-version: "3.12"
+      - name: Install locked dependencies
+        run: uv sync --locked
+      - name: Verify application
+        run: uv run --locked pytest
+      - name: Export site
+        run: uv run --locked python scripts/export.py
       - name: Configure Pages
         uses: actions/configure-pages@v5
-
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
         with:
           path: dist
-
   deploy:
     environment:
       name: github-pages
