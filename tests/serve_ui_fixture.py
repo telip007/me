@@ -5,6 +5,7 @@ Run: uv run python -m tests.serve_ui_fixture (if tests is a package), or
 The process owns its temporary directory and removes it on shutdown.
 """
 
+import argparse
 import json
 import shutil
 import sys
@@ -54,7 +55,7 @@ Repeated headings also need distinct anchors.
 """
 
 
-def serve():
+def serve(port=8001):
     with tempfile.TemporaryDirectory(prefix="personal-blog-ui-") as directory:
         source = Path(directory) / "src"
         shutil.copytree(ROOT / "src", source)
@@ -88,8 +89,10 @@ def serve():
         (source / "posts" / "long.md").write_text(
             "---json\n" + json.dumps(metadata, ensure_ascii=False) + "\n---\n" + BODY
         )
-        uvicorn.run(create_app(source_dir=source), host="127.0.0.1", port=8001, log_level="warning")
+        uvicorn.run(create_app(source_dir=source), host="127.0.0.1", port=port, log_level="warning")
 
 
 if __name__ == "__main__":
-    serve()
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("--port", type=int, default=8001)
+    serve(parser.parse_args().port)

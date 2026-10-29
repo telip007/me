@@ -33,3 +33,12 @@
 - [x] Root: replace legacy build implementation with Python command wrapper; preserve npm command interface and update workflow/README/AGENTS to actual architecture.
 - [x] Independent review: audit implementation and research against spec; fix substantive issues, run fresh tests/build/browser checks.
 - [x] Record verified results and durable findings using the shared wiki helper; completion audit against every acceptance item.
+
+## Visual revision after user review
+
+- [x] Record rejection of initial blue/white direction and preserve privacy of contextual brief.
+- [x] Broaden original-source identity research beyond the supplied references.
+- [x] Build three materially different visual systems and reading treatments.
+- [x] Resolve the visual direction with user feedback: direct correction confirms A.
+- [x] Carry the selected system through all routes and repeat relevant browser checks.
+- [x] Update final documentation/wiki with the selected A implementation and verified evidence before completion.

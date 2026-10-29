@@ -6,14 +6,15 @@
   <title>{{ title }}{% if title != config.siteTitle %} | {{ config.siteTitle }}{% endif %}</title>
   <meta name="description" content="{{ description }}">
   <meta name="robots" content="{{ 'noindex,follow' if noindex or page_type == 'error' else 'index,follow' }}">
-  <meta name="theme-color" content="#fbfcff">
-  <meta name="color-scheme" content="light">
+  <meta name="theme-color" content="#281e2a">
+  <meta name="color-scheme" content="dark light">
   <link rel="canonical" href="{{ canonical }}">
   {% for code, href in alternates.items() %}<link rel="alternate" hreflang="{{ code }}" href="{{ href }}">{% endfor %}
   <link rel="alternate" type="application/rss+xml" title="{{ config.siteTitle }} — {{ lang|upper }}" href="{{ feed_url }}">
   <link rel="icon" href="{{ url('/favicon.svg') }}" type="image/svg+xml">
-  <link rel="preload" href="{{ url('/static/fonts/Manrope.woff2') }}?v=0366ccbf579b" as="font" type="font/woff2" crossorigin>
+  <link rel="preload" href="{{ url('/static/fonts/BricolageGrotesque.woff2') }}?v=89c140b3bc41" as="font" type="font/woff2" crossorigin>
   <link rel="stylesheet" href="{{ url('/static/site.css') }}?v={{ asset_version }}">
+  <link rel="stylesheet" href="{{ url('/static/reading.css') }}?v={{ asset_version }}">
   <meta property="og:site_name" content="{{ config.siteTitle }}">
   <meta property="og:title" content="{{ title }}">
   <meta property="og:description" content="{{ description }}">
@@ -41,7 +42,6 @@
   <div class="site-wrap">
     <header class="site-header">
       <a class="identity" href="{{ home_url }}" aria-label="{{ config.siteTitle }} — {{ 'Startseite' if lang == 'de' else 'Home' }}">
-        <svg class="identity-mark" aria-hidden="true" viewBox="0 0 32 32"><path d="M8 7h17v5H8zm0 0h5v17h-5zm5 17h12v5H13z" fill="currentColor"/></svg>
         <span>{{ config.siteTitle }}</span>
       </a>
       <nav class="site-nav" aria-label="{{ 'Hauptnavigation' if lang == 'de' else 'Main navigation' }}">
@@ -52,7 +52,7 @@
     </header>
     <main id="content" tabindex="-1">{% block content %}{% endblock %}</main>
     <footer class="site-footer">
-      <div><p class="footer-name">{{ config.siteTitle }}</p><p>{{ 'KI, LLMs und Agentic Engineering.' if lang == 'de' else 'AI, LLMs and agentic engineering.' }}</p></div>
+      <div><p class="footer-name">{{ config.siteTitle }}</p><p>{{ 'KI, Software und Agentic Engineering.' if lang == 'de' else 'AI, software and agentic engineering.' }}</p></div>
       <nav aria-label="{{ 'Fußzeile' if lang == 'de' else 'Footer' }}">
         <a href="{{ feed_url }}">RSS</a>
         <a href="https://github.com/telip007" rel="me">GitHub</a>

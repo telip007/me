@@ -75,6 +75,8 @@ This is a documentation example, not a published article.
 
 Read the [editorial guide](docs/editorial-guide.md) before drafting or publishing. It includes reader briefs, explanation/investigation/tutorial outlines, a claim ledger, editing passes, feedback prompts, translation parity and publication checks. It applies the requested Pragmatic Engineer article alongside Google, Microsoft, Julia Evans, Diátaxis and MDN; it does not impose boilerplate article sections.
 
+The selected visual direction A uses a wine opening, an offset paper reading plane, citron edges and Bricolage typography. The initial blue/white direction was rejected; the [working studies](docs/design-exploration/README.md) and [broader identity research](docs/research/expressive-design.md) preserve that decision.
+
 The source-linked [editorial research](docs/research/editorial.md) and [design research](docs/research/design.md) record findings checked on 29 October 2026, including original engineering blogs and platform standards. [DESIGN.md](DESIGN.md) records implementation decisions. Primary sources support factual claims; original experiments require actual artifacts. Do not invent experience, measurements, quotes, human review or citations. Keep private notes outside public copy. Do not add blanket AI notices to articles or shared templates. Existing About copy is preserved.
 
 ## Configuration and privacy
@@ -99,3 +101,5 @@ Run behind your chosen HTTPS reverse proxy. The image runs as a non-root user; u
 Do not commit `dist/`, `.venv/`, private source material or credentials. The original untracked user article is deliberately outside this rewrite.
 
 Code is MIT-licensed. Articles and personal content are © Talip Göksu, all rights reserved unless stated otherwise. Vendored fonts and HTMX retain their own included licenses.
+
+Final selected-A verification and screenshots: [verification report](docs/qa/selected-a/verification.md). The earlier blue/white report records a rejected design checkpoint.

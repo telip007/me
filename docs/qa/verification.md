@@ -1,4 +1,6 @@
-# Rewrite verification — 29 October 2026
+# Initial technical checkpoint — 29 October 2026
+
+**Visual status:** The user subsequently rejected the initial palette/composition as sterile and generic. The technical evidence below remains valid for that checkpoint; it does not establish visual acceptance. A broader identity exploration is now in progress.
 
 The rewrite is local, in an isolated worktree based on `640ff81`. No push, merge, public deployment, domain change, new host or content publication occurred. The original checkout's untracked `src/posts/was-ist-ki.md` was not copied, staged or modified. Existing tracked Markdown/config/favicon bytes are unchanged. The two tracked article translations remain drafts. Current validation correctly reports **0 public posts / 10 routes**.
 
