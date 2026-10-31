@@ -1,0 +1,16 @@
+{% extends 'base.html' %}
+{% block content %}
+<section class="topic-page" aria-labelledby="writing-title">
+  <h1 id="writing-title">Writing</h1>
+  <a class="feed-link" href="{{ feed_url }}">Follow via RSS</a>
+  {% if all_posts and not static_export %}
+  <form class="search-form" method="get" action="{{ search_url }}" role="search" hx-get="{{ search_url }}" hx-target="#posts" hx-swap="outerHTML" hx-trigger="submit, input changed delay:350ms from:input, change from:select" hx-sync="this:replace" hx-replace-url="true" hx-indicator="#search-loading">
+    <div class="search-field"><label for="article-search">Search writing</label><div class="input-wrap"><svg aria-hidden="true" viewBox="0 0 20 20"><circle cx="8.5" cy="8.5" r="5.5"/><path d="m13 13 4 4"/></svg><input id="article-search" name="q" type="search" value="{{ q }}" maxlength="200" placeholder="Title, topic or keyword" autocomplete="off"></div></div>
+    <div class="topic-field"><label for="topic">Topic</label><select id="topic" name="tag"><option value="">All topics</option>{% for item in tags %}<option value="{{ item.name }}"{% if tag == item.name %} selected{% endif %}>{{ item.name }}</option>{% endfor %}</select></div>
+    <button type="submit">Search</button>
+  </form>
+  <div class="search-feedback"><p id="search-status" class="sr-only" role="status" aria-live="polite" aria-atomic="true"></p><p id="search-loading" class="htmx-indicator">Searching writing …</p><p id="search-error" class="request-error" role="alert" hidden>Search could not load. Search again or reload the page.</p></div>
+  {% endif %}
+  {% include '_posts.html' %}
+</section>
+{% endblock %}

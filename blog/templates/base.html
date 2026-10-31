@@ -9,7 +9,7 @@
   <meta name="theme-color" content="#281e2a">
   <meta name="color-scheme" content="dark light">
   <link rel="canonical" href="{{ canonical }}">
-  {% for code, href in alternates.items() %}<link rel="alternate" hreflang="{{ code }}" href="{{ href }}">{% endfor %}
+
   <link rel="alternate" type="application/rss+xml" title="{{ config.siteTitle }} — {{ lang|upper }}" href="{{ feed_url }}">
   <link rel="icon" href="{{ url('/favicon.svg') }}" type="image/svg+xml">
   <link rel="preload" href="{{ url('/static/fonts/BricolageGrotesque.woff2') }}?v=89c140b3bc41" as="font" type="font/woff2" crossorigin>
@@ -20,7 +20,7 @@
   <meta property="og:description" content="{{ description }}">
   <meta property="og:url" content="{{ canonical }}">
   <meta property="og:type" content="{{ 'article' if post is defined else 'website' }}">
-  <meta property="og:locale" content="{{ 'de_DE' if lang == 'de' else 'en_GB' }}">
+  <meta property="og:locale" content="en_GB">
   <meta name="twitter:card" content="{{ 'summary_large_image' if post is defined and post.image else 'summary' }}">
   <meta name="twitter:title" content="{{ title }}">
   <meta name="twitter:description" content="{{ description }}">
@@ -31,33 +31,33 @@
   {% if post.image %}<meta property="og:image" content="{{ post.image }}"><meta name="twitter:image" content="{{ post.image }}">{% endif %}
   {% endif %}
   <script type="application/ld+json">{{ json_ld|safe }}</script>
-  {% if not static_export and page_type == 'home' and all_posts %}
+  {% if not static_export and page_type in ['home', 'articles'] and all_posts %}
   <meta name="htmx-config" content='{"allowEval":false,"allowScriptTags":false,"selfRequestsOnly":true,"historyCacheSize":0,"includeIndicatorStyles":false}'>
   <script src="{{ url('/static/htmx.min.js') }}?v={{ asset_version }}" defer></script>
   {% endif %}
-  {% if post is defined or (page_type == 'home' and all_posts and not static_export) %}<script src="{{ url('/static/site.js') }}?v={{ asset_version }}" defer></script>{% endif %}
+  {% if post is defined or (page_type in ['home', 'articles'] and all_posts and not static_export) %}<script src="{{ url('/static/site.js') }}?v={{ asset_version }}" defer></script>{% endif %}
 </head>
 <body class="{{ page_type }}-page" hx-history="false" data-static-export="{{ 'true' if static_export else 'false' }}">
-  <a class="skip-link" href="#content">{{ 'Zum Inhalt springen' if lang == 'de' else 'Skip to content' }}</a>
+  <a class="skip-link" href="#content">Skip to content</a>
   <div class="site-wrap">
     <header class="site-header">
-      <a class="identity" href="{{ home_url }}" aria-label="{{ config.siteTitle }} — {{ 'Startseite' if lang == 'de' else 'Home' }}">
+      <a class="identity" href="{{ home_url }}" aria-label="{{ config.siteTitle }} — Home">
         <span>{{ config.siteTitle }}</span>
       </a>
-      <nav class="site-nav" aria-label="{{ 'Hauptnavigation' if lang == 'de' else 'Main navigation' }}">
-        <a href="{{ home_url }}"{% if page_type == 'home' or page_type == 'tag' or page_type == 'post' %} aria-current="{{ 'page' if page_type == 'home' else 'true' }}"{% endif %}>{{ 'Texte' if lang == 'de' else 'Writing' }}</a>
-        <a href="{{ about_url }}"{% if request.url.path.rstrip('/') == about_url.rstrip('/') %} aria-current="page"{% endif %}>{{ 'Über diesen Blog' if lang == 'de' else 'About this blog' }}</a>
-        <a class="language-switch" href="{{ switch_url }}" hreflang="{{ other_lang }}" lang="{{ other_lang }}" aria-label="{{ 'EN: Read in English' if other_lang == 'en' else 'DE: Auf Deutsch lesen' }}">{{ other_lang|upper }}</a>
+      <nav class="site-nav" aria-label="Main navigation">
+        <a href="{{ articles_url }}"{% if page_type in ['articles', 'post'] %} aria-current="{{ 'page' if page_type == 'articles' else 'true' }}"{% endif %}>Writing</a>
+        <a href="{{ tags_url }}"{% if page_type in ['tag', 'tag_index'] %} aria-current="{{ 'page' if page_type == 'tag_index' else 'true' }}"{% endif %}>Topics</a>
+        <a href="{{ about_url }}"{% if request.url.path.rstrip('/') == about_url.rstrip('/') %} aria-current="page"{% endif %}>About this blog</a>
       </nav>
     </header>
     <main id="content" tabindex="-1">{% block content %}{% endblock %}</main>
     <footer class="site-footer">
-      <div><p class="footer-name">{{ config.siteTitle }}</p><p>{{ 'KI, Software und Agentic Engineering.' if lang == 'de' else 'AI, software and agentic engineering.' }}</p></div>
-      <nav aria-label="{{ 'Fußzeile' if lang == 'de' else 'Footer' }}">
+      <div><p class="footer-name">{{ config.siteTitle }}</p><p>AI, software and agentic engineering.</p></div>
+      <nav aria-label="Footer">
         <a href="{{ feed_url }}">RSS</a>
         <a href="https://github.com/telip007" rel="me">GitHub</a>
-        <a href="{{ privacy_url }}" lang="de">{{ 'Datenschutz' if lang == 'de' else 'Privacy (German)' }}</a>
-        <a class="back-top" href="#top">{{ 'Nach oben' if lang == 'de' else 'Back to top' }} <svg aria-hidden="true" viewBox="0 0 16 16"><path d="M8 13V3m-4 4 4-4 4 4"/></svg></a>
+        <a href="{{ privacy_url }}">Privacy</a>
+        <a class="back-top" href="#top">Back to top <svg aria-hidden="true" viewBox="0 0 16 16"><path d="M8 13V3m-4 4 4-4 4 4"/></svg></a>
       </nav>
     </footer>
   </div>

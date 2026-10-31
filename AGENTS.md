@@ -4,7 +4,7 @@ Project-specific guidance for future agent sessions working on this repository.
 
 ## Project overview
 
-- This is a small bilingual Markdown personal blog for Talip Göksu, served with FastAPI and progressively enhanced with HTMX.
+- This is a small English-only Markdown personal blog for Talip Göksu, served with FastAPI and progressively enhanced with HTMX.
 - Content is written in Markdown under `src/`. Python/Jinja renders runtime HTML and an optional static export in `dist/`.
 - There is no frontend SPA, CMS, admin UI, database, tracking, or required client-side JavaScript. HTMX enhances an ordinary GET search form.
 - Keep the site simple, fast, readable, and easy to reason about.
@@ -31,19 +31,19 @@ Run Python tests, `node --test scripts/build.test.js`, and `npm run build` after
 
 ## Publishing
 
-- GitHub Pages static compatibility deployment is configured in `.github/workflows/pages.yml`. FastAPI is the primary application; GitHub Pages cannot execute ASGI or server search.
-- Pushes to `main` build the site and deploy the generated `dist/` artifact.
-- The repository is published with the GitHub Pages custom domain `goeksu.me`.
-- Keep `src/config.json` `siteUrl` and `basePath` in sync. With the custom domain, `basePath` should remain empty. Use `/me` only if the site is moved back to `https://telip007.github.io/me`.
+- Fly.io is the primary FastAPI runtime. The deployment workflow builds and deploys on pushes to `main`; GitHub Pages is no longer the production runtime.
+- Preserve the custom domain `goeksu.me`. Keep `src/config.json` `siteUrl` set to its HTTPS origin and `basePath` empty for production.
+- Static export remains an optional local compatibility artifact. It omits dynamic search controls and must not be confused with the live FastAPI deployment.
+- Verify the actual deployed application, custom-domain certificate and public routes when making a release claim.
 
 ## Repository structure
 
 - `src/config.json` — site metadata, author, canonical site URL, RSS/sitemap values.
 - `src/about.md` — public About page content.
-- `src/datenschutz.md` — privacy notice (Datenschutzerklärung), rendered to `/datenschutz/` and linked in the footer. Keep it in sync with the actual setup (GitHub Pages hosting, no tracking, no cookies).
+- `src/privacy.md` — English privacy notice, rendered to `/privacy/` and linked in the footer. Keep it in sync with the actual Fly.io hosting and data handling; no tracking or application cookies.
 - `src/posts/*.md` — blog posts. There may be no posts yet; that is valid.
 - `blog/static/site.css` — responsive styling shared by runtime and export; local fonts/licenses live in `blog/static/fonts/`.
-- `blog/content.py` — safe content parsing, Markdown rendering and route/translation validation.
+- `blog/content.py` — safe content parsing, Markdown rendering and route validation.
 - `blog/main.py` — FastAPI application factory, Jinja responses, search, feeds and metadata.
 - `blog/templates/` — shared HTML templates.
 - `blog/export.py` — static export using the same application renderer.
@@ -51,7 +51,7 @@ Run Python tests, `node --test scripts/build.test.js`, and `npm run build` after
 - `docs/editorial-guide.md` and `docs/research/` — writing policy and source-backed research.
 - `scripts/clean.js` — removes generated output.
 - `src/favicon.svg` — source favicon copied into generated output.
-- `.github/workflows/pages.yml` — GitHub Pages build/deploy workflow.
+- `fly.toml`, `Dockerfile` and the deployment workflow — Fly.io runtime and main-branch delivery configuration.
 - `dist/` — generated static output. Do not manually edit files here; change `src/` or `scripts/build.js` and rebuild.
 
 ## Content conventions
@@ -77,14 +77,15 @@ Run Python tests, `node --test scripts/build.test.js`, and `npm run build` after
 - `dist/` is generated output. It is currently ignored; rebuild locally when needed.
 - Do not commit secrets or private notes.
 
-## Bilingual editorial workflow
+## English-only editorial workflow
 
-- Preserve German URLs. English lives under `/en/`, with `/en/articles/`, `/en/tags/`, `/en/about/` and `/en/rss.xml`.
-- Posts use `lang: de|en`, a shared `translationKey`, a locale-specific `slug` and explicit `date`. Missing `lang` remains German.
-- Keep unpublished material in `drafts/` or mark it with the boolean `draft: true`. Drafts must not leak into feeds, sitemap, navigation or alternate-language metadata. Future dates are not a publishing gate.
-- Never include an unrelated untracked user post in a publication commit. Inspect git status and stage only the files explicitly part of the task.
-- About pages are `src/about.md` and `src/about.en.md`. Preserve current public professional links unless asked to remove them. Keep the existing `/datenschutz/` text intact; English links explicitly say it is German.
-- Do not add blanket AI-creation notices to individual articles or shared page templates, and do not create replacement disclaimers or a central disclosure page. Preserve substantive AI content, sources and factual evidence limits. Do not claim Talip personally wrote or reviewed each article when work is autonomous. Talip retains responsibility for direction and operation.
+- The public site is English-only. Canonical routes are `/`, `/articles/`, `/articles/<slug>/`, `/tags/`, `/tags/<tag>/`, `/about/`, `/privacy/` and `/rss.xml`.
+- Posts may use `lang: en`; omitted `lang` defaults to English. Files explicitly marked `lang: de` remain local and are excluded from every public page, search result, tag, feed, sitemap and redirect target. Do not translate or publish them automatically.
+- Preserve old `/en/` counterparts as permanent redirects to existing canonical English routes. `/ueber-mich/` redirects to `/about/`, and `/datenschutz/` to `/privacy/`. Never generate public German content or language-switch navigation.
+- Keep unpublished material in `drafts/` or mark it with boolean `draft: true`. Drafts must never leak. Future dates are not a publishing gate.
+- Never include an unrelated untracked user post in a publication commit. Inspect git status and stage only files explicitly part of the task.
+- The public About source is `src/about.md`. Preserve its professional links unless asked to remove them. Privacy is `src/privacy.md`; keep the hosting details accurate.
+- Do not add blanket AI-creation notices to individual articles or shared templates, replacement disclaimers, or a central disclosure page. Preserve substantive AI content, sources and factual evidence limits. Do not claim Talip personally wrote or reviewed autonomous articles. Talip retains responsibility for direction and operation.
 - Ground article claims in linked sources. Original setup/experiment claims require actual evidence. No invented experience, measurements, quotes or citations. New sources and user-supplied topics still require editorial checks.
-- Front matter must remain non-executable YAML or JSON. Do not enable JavaScript parsing or raw Markdown HTML.
-- Run `node --test scripts/build.test.js` and `npm run build` after generator or content-model changes. Tests use temporary fixtures; do not create example articles in the live source directory.
+- Front matter must remain non-executable YAML or JSON. Reject duplicate metadata keys. Do not enable JavaScript parsing or raw Markdown HTML.
+- Run Python tests, `node --test scripts/build.test.js` and `npm run build` after route or content-model changes. Tests use temporary fixtures; never create example articles in live sources.

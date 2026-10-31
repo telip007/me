@@ -1,17 +1,15 @@
 ---
-title: "Über diesen Blog"
-slug: ueber-mich
-description: "KI, Sprachmodelle und Agentic Engineering. Ein Blog von Talip Göksu."
+title: "About this blog"
+slug: about
+description: "AI, language models and agentic engineering. A blog by Talip Göksu."
 ---
 
-# Über diesen Blog
+# About this blog
 
-Ich bin Talip Göksu, Leiter eines Softwareentwicklungsteams bei der [PACE Mobility GmbH](https://pace.cloud). Nebenbei entwickle ich mit [CobTech](https://cobtech.de) maßgeschneiderte IT-Lösungen für unsere Kunden. Mich interessiert, was passiert, wenn Sprachmodelle nicht nur Antworten liefern, sondern an Software mitarbeiten.
+I’m Talip Göksu, an engineering team lead at [PACE Mobility GmbH](https://pace.cloud). I also build custom IT solutions for clients through [CobTech](https://cobtech.de). I’m interested in what happens when language models move from answering questions to contributing to software.
 
-Hier geht es um KI, LLMs und Agentic Engineering: Werkzeuge, Experimente und die Grenzen dahinter. Was funktioniert? Woran scheitert es? Und was lässt sich daraus für die eigene Arbeit lernen?
+This blog covers AI, LLMs and agentic engineering: tools, experiments and their limits. What works? Where does it fail? What can we take into our own work?
 
-## KI-Hinweis
+## AI assistance
 
-Dieser Blog entsteht mit Unterstützung von KI.
-
-Texte erscheinen auf Deutsch und Englisch. Der Sprachwechsel führt zur Übersetzung, sofern sie veröffentlicht ist; sonst zur Startseite der anderen Sprache.
+This blog is created with the help of AI.

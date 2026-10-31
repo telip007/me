@@ -19,21 +19,19 @@ def source(tmp_path):
                 "siteUrl": "https://example.test",
                 "basePath": "",
                 "siteTitle": "Example",
-                "siteSubtitle": "Deutsch",
-                "siteDescription": "Beschreibung",
+                "siteSubtitle": "Building with AI",
+                "siteDescription": "Description",
                 "author": "Example",
-                "locales": {"en": {"siteSubtitle": "English", "siteDescription": "Description"}},
             }
         )
     )
-    (src / "about.md").write_text("---\ntitle: Über diesen Blog\nslug: ueber-mich\n---\n# Deutsch")
-    (src / "about.en.md").write_text("---\ntitle: About this blog\nslug: about\n---\n# English")
-    (src / "datenschutz.md").write_text("# Datenschutz\n\nBestehender Rechtstext.")
+    (src / "about.md").write_text("---\ntitle: About this blog\nslug: about\n---\n# About this blog")
+    (src / "privacy.md").write_text("# Privacy\n\nExisting English privacy notice.")
     (src / "favicon.svg").write_text('<svg xmlns="http://www.w3.org/2000/svg"/>')
     return src
 
 
-def post(source, name="de", meta="", body="A useful article."):
+def post(source, name="english", meta="", body="A useful article."):
     path = source / "posts" / f"{name}.md"
     defaults = {"title": name, "date": "'2026-01-01'", "tags": "[LLM]"}
     header = "\n".join(
@@ -46,19 +44,19 @@ def post(source, name="de", meta="", body="A useful article."):
 def test_content_routes_and_safe_markdown(source):
     post(
         source,
-        meta="slug: modelle\ntranslationKey: models",
+        meta="slug: models",
         body="## A heading\n\n<script>alert(1)</script>\n\n[Bad](javascript:alert(1))",
     )
-    post(source, "en", "lang: en\nslug: models\ntranslationKey: models")
+    post(source, "german", "lang: de\nslug: modelle", "GERMAN_PRIVATE_MARKER")
     store = load_content(source)
-    german, english = store.posts
-    assert german.url == "/texte/modelle/"
-    assert english.url == "/en/articles/models/"
-    assert german.alternates == {"de": german.url, "en": english.url}
-    assert "<script>" not in german.html
-    assert 'href="javascript:' not in german.html
-    assert '<h2 id="a-heading">' in german.html
-    assert german.toc[0]["id"] == "a-heading"
+    assert len(store.posts) == 1
+    english = store.posts[0]
+    assert english.lang == "en"
+    assert english.url == "/articles/models/"
+    assert "<script>" not in english.html
+    assert 'href="javascript:' not in english.html
+    assert '<h2 id="a-heading">' in english.html
+    assert english.toc[0]["id"] == "a-heading"
 
 
 def test_drafts_future_dates_and_metadata_validation(source):
@@ -66,7 +64,7 @@ def test_drafts_future_dates_and_metadata_validation(source):
     post(source, "en", "lang: en\nslug: secret\ntranslationKey: pair\ndraft: true", "PRIVATE_DRAFT_MARKER")
     store = load_content(source)
     assert len(store.posts) == 1
-    assert store.posts[0].alternates == {"de": "/texte/visible/"}
+    assert store.posts[0].lang == "en"
     post(source, "en", "draft: 'yes'")
     with pytest.raises(ContentError, match="draft must be true or false"):
         load_content(source)
@@ -115,46 +113,68 @@ def test_nonexecutable_yaml_and_json(source):
 
 
 def test_routes_filter_fragments_and_base_path(source):
-    post(source, meta="slug: modelle\ntranslationKey: models")
-    post(source, "en", "lang: en\nslug: models\ntranslationKey: models")
+    post(source, meta="slug: models")
     client = TestClient(create_app(source_dir=source, base_path="/me"))
     home = client.get("/me/")
     assert home.status_code == 200
-    assert '<html lang="de"' in home.text
-    assert 'href="/me/ueber-mich/"' in home.text
-    english = client.get("/me/en/articles/models/")
-    assert 'hreflang="de" href="https://example.test/me/texte/modelle/"' in english.text
-    assert 'rel="canonical" href="https://example.test/me/en/articles/models/"' in english.text
+    assert '<html lang="en"' in home.text
+    assert 'href="/me/about/"' in home.text
+    assert "language-switch" not in home.text
+    english = client.get("/me/articles/models/")
+    assert 'rel="canonical" href="https://example.test/me/articles/models/"' in english.text
+    assert "hreflang=" not in english.text
     fragment = client.get("/me/?q=missing", headers={"HX-Request": "true"})
     assert fragment.status_code == 200
     assert "<html" not in fragment.text
-    assert "de" not in fragment.text or "modelle/" not in fragment.text
+    assert "models/" not in fragment.text
     assert "HX-Request" in fragment.headers["vary"]
     full = client.get("/me/?q=missing")
     assert "<html" in full.text
-    assert "modelle/" not in full.text
-    assert client.get("/me/about/", follow_redirects=False).headers["location"] == "/me/ueber-mich/"
+    assert "models/" not in full.text
     assert client.get("/me/archive/").status_code == 404
-    assert 'lang="en"' in client.get("/me/en/not-found/").text
-    assert "Bestehender Rechtstext." in client.get("/me/datenschutz/").text
-    assert "Privacy (German)" in client.get("/me/en/").text
+    assert 'lang="en"' in client.get("/me/not-found/").text
+    assert "Existing English privacy notice." in client.get("/me/privacy/").text
+    for path in ["/me/articles/", "/me/tags/", "/me/tags/llm/"]:
+        assert client.get(path).status_code == 200
+
+
+def test_legacy_english_and_legal_routes_redirect_canonical(source):
+    post(source, meta="slug: models")
+    client = TestClient(create_app(source_dir=source, base_path="/me"))
+    paths = {
+        "/en/": "/",
+        "/en/articles/": "/articles/",
+        "/en/articles/models/": "/articles/models/",
+        "/en/tags/": "/tags/",
+        "/en/tags/llm/": "/tags/llm/",
+        "/en/about/": "/about/",
+        "/en/rss.xml": "/rss.xml",
+        "/ueber-mich/": "/about/",
+        "/datenschutz/": "/privacy/",
+    }
+    for old, new in paths.items():
+        response = client.get("/me" + old, follow_redirects=False)
+        assert response.status_code == 308
+        assert response.headers["location"] == "/me" + new
+    assert client.get("/me/en/articles/secret/", follow_redirects=False).status_code == 404
 
 
 def test_feed_sitemap_draft_isolation_and_headers(source):
     post(source, meta='slug: visible\ntranslationKey: pair\nexcerpt: "A & B ]]> </script>"')
     post(source, "en", "lang: en\nslug: hidden\ntranslationKey: pair\ndraft: true", "PRIVATE_DRAFT_MARKER")
     client = TestClient(create_app(source_dir=source))
-    for route in ["/", "/en/", "/rss.xml", "/en/rss.xml", "/sitemap.xml", "/texte/visible/"]:
+    for route in ["/", "/articles/", "/tags/", "/rss.xml", "/sitemap.xml", "/articles/visible/"]:
         response = client.get(route)
         assert response.status_code == 200
         assert "PRIVATE_DRAFT_MARKER" not in response.text
         assert "/hidden/" not in response.text
         assert response.headers["x-content-type-options"] == "nosniff"
     assert "A &amp; B ]]&gt; &lt;/script&gt;" in client.get("/rss.xml").text
-    assert "\\u003c/script>" in client.get("/texte/visible/").text
+    assert "\\u003c/script>" in client.get("/articles/visible/").text
     assert client.get("/en/articles/hidden/").status_code == 404
     assert "<language>en</language>" in client.get("/en/rss.xml").text
-    assert "/datenschutz/" in client.get("/sitemap.xml").text
+    assert "/privacy/" in client.get("/sitemap.xml").text
+    assert "/en/" not in client.get("/sitemap.xml").text
 
 
 def test_export_uses_app_and_preserves_previous_output_on_invalid_content(source, tmp_path):
@@ -162,9 +182,9 @@ def test_export_uses_app_and_preserves_previous_output_on_invalid_content(source
     dist = tmp_path / "dist"
     export_site(source, dist)
     before = (dist / "index.html").read_text()
-    assert (dist / "texte/article/index.html").is_file()
+    assert (dist / "articles/article/index.html").is_file()
     assert (dist / "404.html").is_file()
-    assert "url=/ueber-mich/" in (dist / "about/index.html").read_text()
+    assert "url=/about/" in (dist / "ueber-mich/index.html").read_text()
     assert 'data-static-export="true"' in before
     assert "hx-get=" not in before
     assert "/static/htmx.min.js" not in before
@@ -196,7 +216,7 @@ def test_history_restoration_and_filter_canonical(source):
     assert "<html" in restored.text
     assert 'rel="canonical" href="https://example.test/"' in restored.text
     assert 'content="noindex,follow"' in restored.text
-    assert client.get("/?tag=llm").text.count("/texte/useful/") == 1
+    assert client.get("/?tag=llm").text.count("/articles/useful/") == 1
 
 
 def test_search_uses_visible_content_not_html_markup(source):
@@ -207,10 +227,13 @@ def test_search_uses_visible_content_not_html_markup(source):
     )
     client = TestClient(create_app(source_dir=source))
     for query in ["A & B", "print", "Source"]:
-        assert "/texte/visible/" in client.get("/", params={"q": query}, headers={"HX-Request": "true"}).text
+        assert (
+            "/articles/visible/" in client.get("/", params={"q": query}, headers={"HX-Request": "true"}).text
+        )
     for query in ["href", "language-python", "example.test/reference"]:
         assert (
-            "/texte/visible/" not in client.get("/", params={"q": query}, headers={"HX-Request": "true"}).text
+            "/articles/visible/"
+            not in client.get("/", params={"q": query}, headers={"HX-Request": "true"}).text
         )
 
 
@@ -228,7 +251,7 @@ def test_head_matches_get_status_headers_without_body(source):
     client = TestClient(create_app(source_dir=source, base_path="/me"))
     for path in [
         "/me/",
-        "/me/texte/article/",
+        "/me/articles/article/",
         "/me/rss.xml",
         "/me/sitemap.xml",
         "/me/robots.txt",
@@ -292,10 +315,30 @@ def test_timestamp_keeps_time_and_timezone(source, timestamp):
 def test_large_responses_are_compressed_and_cache_varies_by_encoding(source):
     post(source, meta="slug: article", body="Useful content. " * 300)
     client = TestClient(create_app(source_dir=source))
-    for route in ["/texte/article/", "/static/site.css", "/static/htmx.min.js"]:
+    for route in ["/articles/article/", "/static/site.css", "/static/htmx.min.js"]:
         response = client.get(route, headers={"Accept-Encoding": "gzip"})
         assert response.status_code == 200
         assert response.headers.get("content-encoding") == "gzip"
         assert "Accept-Encoding" in response.headers["vary"]
         assert response.headers["x-content-type-options"] == "nosniff"
     assert "content-encoding" not in client.get("/healthz", headers={"Accept-Encoding": "gzip"}).headers
+
+
+def test_german_content_never_leaks_into_any_public_surface(source, tmp_path):
+    post(source, "german", "lang: de\nslug: geheim\ntags: [GEHEIM]", "GERMAN_PRIVATE_MARKER")
+    post(source, "draft", "draft: true\nslug: draft", "DRAFT_PRIVATE_MARKER")
+    client = TestClient(create_app(source_dir=source))
+    for route in ["/", "/articles/", "/tags/", "/about/", "/privacy/", "/rss.xml", "/sitemap.xml"]:
+        response = client.get(route)
+        assert response.status_code == 200
+        assert "GERMAN_PRIVATE_MARKER" not in response.text
+        assert "DRAFT_PRIVATE_MARKER" not in response.text
+        assert "GEHEIM" not in response.text
+        assert 'lang="de"' not in response.text
+    for route in ["/articles/geheim/", "/en/articles/geheim/", "/texte/geheim/", "/tags/geheim/"]:
+        assert client.get(route).status_code == 404
+    export_site(source, tmp_path / "dist")
+    for path in (tmp_path / "dist").rglob("*.html"):
+        assert "GERMAN_PRIVATE_MARKER" not in path.read_text()
+        assert "DRAFT_PRIVATE_MARKER" not in path.read_text()
+        assert 'lang="de"' not in path.read_text()

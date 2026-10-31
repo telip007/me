@@ -5,22 +5,22 @@
   <div class="layer-mark" aria-hidden="true"><span></span><span></span><span></span></div>
   <div class="intro-aside">
     <p>{{ config.siteDescription }}</p>
-    <a class="intro-link" href="#writing">{{ 'Zu den Texten' if lang == 'de' else 'Explore the writing' }} <span class="round-arrow"><svg aria-hidden="true" viewBox="0 0 20 20"><path d="M3 10h13m-5-5 5 5-5 5"/></svg></span></a>
+    <a class="intro-link" href="#writing">Explore the writing <span class="round-arrow"><svg aria-hidden="true" viewBox="0 0 20 20"><path d="M3 10h13m-5-5 5 5-5 5"/></svg></span></a>
   </div>
 </section>
 <div class="reading-plane">
 <section class="journal" id="writing" aria-labelledby="writing-title">
-  <div class="section-heading"><h2 id="writing-title">{{ 'Texte' if lang == 'de' else 'Writing' }}</h2><a class="feed-link" href="{{ feed_url }}">{{ 'Mit RSS folgen' if lang == 'de' else 'Follow via RSS' }} <svg viewBox="0 0 20 20" aria-hidden="true"><circle cx="5" cy="15" r="1" fill="currentColor" stroke="none"/><path d="M4 9a7 7 0 0 1 7 7M4 4a12 12 0 0 1 12 12"/></svg></a></div>
+  <div class="section-heading"><h2 id="writing-title">Writing</h2><a class="feed-link" href="{{ feed_url }}">Follow via RSS <svg viewBox="0 0 20 20" aria-hidden="true"><circle cx="5" cy="15" r="1" fill="currentColor" stroke="none"/><path d="M4 9a7 7 0 0 1 7 7M4 4a12 12 0 0 1 12 12"/></svg></a></div>
   {% if all_posts and not static_export %}
-  <form class="search-form" method="get" action="{{ home_url }}" role="search" hx-get="{{ home_url }}" hx-target="#posts" hx-swap="outerHTML" hx-trigger="submit, input changed delay:350ms from:input, change from:select" hx-sync="this:replace" hx-replace-url="true" hx-indicator="#search-loading">
-    <div class="search-field"><label for="article-search">{{ 'Texte durchsuchen' if lang == 'de' else 'Search writing' }}</label><div class="input-wrap"><svg aria-hidden="true" viewBox="0 0 20 20"><circle cx="8.5" cy="8.5" r="5.5"/><path d="m13 13 4 4"/></svg><input id="article-search" name="q" type="search" value="{{ q }}" maxlength="200" placeholder="{{ 'Titel, Thema oder Begriff' if lang == 'de' else 'Title, topic or keyword' }}" autocomplete="off"></div></div>
-    <div class="topic-field"><label for="topic">{{ 'Thema' if lang == 'de' else 'Topic' }}</label><select id="topic" name="tag"><option value="">{{ 'Alle Themen' if lang == 'de' else 'All topics' }}</option>{% for item in tags %}<option value="{{ item.name }}"{% if tag == item.name %} selected{% endif %}>{{ item.name }}</option>{% endfor %}</select></div>
-    <button type="submit">{{ 'Suchen' if lang == 'de' else 'Search' }}</button>
+  <form class="search-form" method="get" action="{{ search_url }}" role="search" hx-get="{{ search_url }}" hx-target="#posts" hx-swap="outerHTML" hx-trigger="submit, input changed delay:350ms from:input, change from:select" hx-sync="this:replace" hx-replace-url="true" hx-indicator="#search-loading">
+    <div class="search-field"><label for="article-search">Search writing</label><div class="input-wrap"><svg aria-hidden="true" viewBox="0 0 20 20"><circle cx="8.5" cy="8.5" r="5.5"/><path d="m13 13 4 4"/></svg><input id="article-search" name="q" type="search" value="{{ q }}" maxlength="200" placeholder="Title, topic or keyword" autocomplete="off"></div></div>
+    <div class="topic-field"><label for="topic">Topic</label><select id="topic" name="tag"><option value="">All topics</option>{% for item in tags %}<option value="{{ item.name }}"{% if tag == item.name %} selected{% endif %}>{{ item.name }}</option>{% endfor %}</select></div>
+    <button type="submit">Search</button>
   </form>
-  <div class="search-feedback"><p id="search-status" class="sr-only" role="status" aria-live="polite" aria-atomic="true"></p><p id="search-loading" class="htmx-indicator">{{ 'Texte werden gesucht …' if lang == 'de' else 'Searching writing …' }}</p><p id="search-error" class="request-error" role="alert" hidden>{{ 'Die Suche konnte nicht geladen werden. Erneut suchen oder die Seite neu laden.' if lang == 'de' else 'Search could not load. Search again or reload the page.' }}</p></div>
+  <div class="search-feedback"><p id="search-status" class="sr-only" role="status" aria-live="polite" aria-atomic="true"></p><p id="search-loading" class="htmx-indicator">Searching writing …</p><p id="search-error" class="request-error" role="alert" hidden>Search could not load. Search again or reload the page.</p></div>
   {% endif %}
   {% include '_posts.html' %}
 </section>
-<section class="editorial-note" aria-label="{{ 'Themen dieses Blogs' if lang == 'de' else 'What this blog covers' }}"><p>{{ 'KI verstehen. Werkzeuge prüfen. Software bauen.' if lang == 'de' else 'Understand AI. Examine the tools. Build software.' }}</p><span>{{ 'Konkrete Beispiele. Überprüfbare Quellen. Offene Fragen.' if lang == 'de' else 'Concrete examples. Verifiable sources. Open questions.' }}</span></section>
+<section class="editorial-note" aria-label="What this blog covers"><p>Understand AI. Examine the tools. Build software.</p><span>Concrete examples. Verifiable sources. Open questions.</span></section>
 </div>
 {% endblock %}

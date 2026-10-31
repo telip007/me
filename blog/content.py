@@ -19,11 +19,11 @@ import yaml
 from markdown_it import MarkdownIt
 from markupsafe import Markup
 
-LANGUAGES = ("de", "en")
-HOME = {"de": "/", "en": "/en/"}
-POST_PREFIX = {"de": "/texte/", "en": "/en/articles/"}
-TAG_PREFIX = {"de": "/themen/", "en": "/en/tags/"}
-FEED = {"de": "/rss.xml", "en": "/en/rss.xml"}
+LANGUAGES = ("en",)
+HOME = {"en": "/"}
+POST_PREFIX = {"en": "/articles/"}
+TAG_PREFIX = {"en": "/tags/"}
+FEED = {"en": "/rss.xml"}
 
 
 class ContentError(ValueError):
@@ -112,24 +112,8 @@ def date_value(value: str) -> datetime:
     return parsed.replace(tzinfo=UTC) if parsed.tzinfo is None else parsed
 
 
-def format_date(value: str, lang: str = "de") -> str:
+def format_date(value: str, lang: str = "en") -> str:
     parsed = date_value(value)
-    if lang == "de":
-        months = [
-            "Jan.",
-            "Feb.",
-            "März",
-            "Apr.",
-            "Mai",
-            "Juni",
-            "Juli",
-            "Aug.",
-            "Sept.",
-            "Okt.",
-            "Nov.",
-            "Dez.",
-        ]
-        return f"{parsed.day:02d}. {months[parsed.month - 1]} {parsed.year}"
     return parsed.strftime("%d %b %Y")
 
 
@@ -218,7 +202,7 @@ class ContentStore:
     routes: dict[str, tuple[str, object]]
 
     def localized(self, lang: str) -> dict:
-        return {**self.config, **self.config.get("locales", {}).get(lang, {}), "language": lang}
+        return {**self.config, "language": "en"}
 
     def for_language(self, lang: str) -> list[Post]:
         return sorted(
@@ -266,22 +250,33 @@ def load_content(source_dir: str | Path) -> ContentStore:
         )
 
     for lang in LANGUAGES:
-        filename = "about.md" if lang == "de" else "about.en.md"
+        filename = "about.md"
         metadata, _ = parse_matter((source / filename).read_text())
-        about_slug = slug(metadata.get("slug", "ueber-mich" if lang == "de" else "about"), "about slug")
+        about_slug = slug(metadata.get("slug", "about"), "about slug")
         about[lang] = page(
             filename,
             lang,
             f"{HOME[lang]}{about_slug}/",
-            "Über diesen Blog" if lang == "de" else "About this blog",
+            "About this blog",
         )
         add(HOME[lang], "home", lang)
         add(about[lang].url, "page", about[lang])
         add(FEED[lang], "feed", lang)
-    privacy = page("datenschutz.md", "de", "/datenschutz/", "Datenschutz")
+    privacy = page("privacy.md", "en", "/privacy/", "Privacy")
     add(privacy.url, "page", privacy)
-    if about["de"].url != "/about/":
-        add("/about/", "redirect", about["de"].url)
+    add("/articles/", "articles", "en")
+    add("/tags/", "tags", "en")
+    for legacy, target in {
+        "/en/": "/",
+        "/en/articles/": "/articles/",
+        "/en/tags/": "/tags/",
+        "/en/about/": "/about/",
+        "/en/privacy/": "/privacy/",
+        "/en/rss.xml": "/rss.xml",
+        "/ueber-mich/": "/about/",
+        "/datenschutz/": "/privacy/",
+    }.items():
+        add(legacy, "redirect", target)
     add("/sitemap.xml", "sitemap", None)
     add("/robots.txt", "robots", None)
     posts = []
@@ -293,7 +288,9 @@ def load_content(source_dir: str | Path) -> ContentStore:
             raise ContentError(f"draft must be true or false: {path.name}")
         if meta.get("draft") is True:
             continue
-        lang = meta.get("lang", "de")
+        lang = meta.get("lang", "en")
+        if lang == "de":
+            continue
         if lang not in LANGUAGES:
             raise ContentError(f"Unsupported lang in {path.name}: {lang}")
         post_slug = slug(meta.get("slug", path.stem), "post slug")
@@ -324,6 +321,7 @@ def load_content(source_dir: str | Path) -> ContentStore:
             image=str(meta["image"]) if meta.get("image") else None,
         )
         add(post.url, "post", post)
+        add(f"/en/articles/{post_slug}/", "redirect", post.url)
         if "translationKey" in meta:
             key = slug(meta["translationKey"], "translationKey")
             if lang in pairs.setdefault(key, {}):
@@ -336,11 +334,8 @@ def load_content(source_dir: str | Path) -> ContentStore:
             if any(other != tag and value == tag_value for other, value in tags[lang].items()):
                 raise ContentError(f"Tag slug collision: {tag}")
             tags[lang][tag] = tag_value
-    for pair in pairs.values():
-        alternates = {lang: post.url for lang, post in pair.items()}
-        for post in pair.values():
-            post.alternates = alternates.copy()
     for lang, language_tags in tags.items():
         for name, value in language_tags.items():
             add(f"{TAG_PREFIX[lang]}{value}/", "tag", (lang, name))
+            add(f"/en/tags/{value}/", "redirect", f"{TAG_PREFIX[lang]}{value}/")
     return ContentStore(config, posts, about, privacy, tags, routes)

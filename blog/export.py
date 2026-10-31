@@ -48,9 +48,9 @@ def export_site(
                     target = escape(prefix + value, quote=True)
                     canonical = escape(store.config["siteUrl"] + prefix + value, quote=True)
                     body = (
-                        '<!doctype html><html lang="de"><head><meta charset="utf-8"><meta name="robots" content="noindex">'
+                        '<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="robots" content="noindex">'
                         f'<meta http-equiv="refresh" content="0; url={target}"><link rel="canonical" href="{canonical}">'
-                        f'<title>Weiterleitung</title></head><body><a href="{target}">Über diesen Blog</a></body></html>'
+                        f'<title>Redirecting</title></head><body><a href="{target}">Continue</a></body></html>'
                     )
                 else:
                     response = client.get(prefix + route)

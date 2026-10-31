@@ -1,16 +1,10 @@
 {
   "siteTitle": "Talip Göksu",
-  "siteSubtitle": "Software entwickeln mit KI.",
-  "siteDescription": "Notizen über künstliche Intelligenz, Software und die Arbeit mit Agenten. Konkrete Beispiele, überprüfbare Quellen und offene Fragen.",
+  "siteSubtitle": "Building software with AI.",
+  "siteDescription": "Notes on artificial intelligence, software and working with agents. Concrete examples, verifiable sources and open questions.",
   "siteUrl": "https://goeksu.me",
   "basePath": "",
   "author": "Talip Göksu",
   "twitterHandle": "",
-  "language": "de",
-  "locales": {
-    "en": {
-      "siteSubtitle": "Building software with AI.",
-      "siteDescription": "Notes on artificial intelligence, software and working with agents. Concrete examples, verifiable sources and open questions."
-    }
-  }
+  "language": "en"
 }

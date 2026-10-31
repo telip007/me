@@ -1,6 +1,6 @@
 # Editorial guide
 
-Policy date: 29 October 2026. For Talip Göksu's German and English engineering blog. This guide turns the [source research](research/editorial.md) into repeatable decisions. It is internal documentation, not public article copy.
+Policy updated: 31 October 2026. For Talip Göksu's English engineering blog. This guide turns the [source research](research/editorial.md) into repeatable decisions. It is internal documentation, not public article copy.
 
 ## Promise to the reader
 
@@ -77,11 +77,11 @@ The row is a template; fill it with real evidence before using it. Do not publis
 
 ## Editing and review
 
-Use distinct passes: answer and evidence; structure and examples; language; bilingual parity; rendered reading. This adapts the draft/edit/feedback process in [Orosz's writing article](https://blog.pragmaticengineer.com/becoming-a-better-writer-in-tech/).
+Use distinct passes: answer and evidence; structure and examples; language; rendered reading. This adapts the draft/edit/feedback process in [Orosz's writing article](https://blog.pragmaticengineer.com/becoming-a-better-writer-in-tech/).
 
 During the structural pass, check that the introduction answers the question the title raises. Move prerequisites before their use. Remove repeated conclusions and unrelated history. Use a table for a real comparison and a diagram for relationships that prose makes difficult. Sources support [putting key answers early](https://developers.google.com/tech-writing/one/documents); the exact outline remains an editorial choice.
 
-During the language pass, read the opening aloud. Replace vague nouns and ornamental verbs with the object and action. Keep one main thought per paragraph, vary rhythm naturally, and use headings that explain their section. Prefer plain international English and natural German. Sentence-style headings and direct verbs are consistent with [Microsoft's style guidance](https://learn.microsoft.com/en-us/style-guide/top-10-tips-style-voice).
+During the language pass, read the opening aloud. Replace vague nouns and ornamental verbs with the object and action. Keep one main thought per paragraph, vary rhythm naturally, and use headings that explain their section. Prefer plain international English. Sentence-style headings and direct verbs are consistent with [Microsoft's style guidance](https://learn.microsoft.com/en-us/style-guide/top-10-tips-style-voice).
 
 Ask a reviewer specific questions:
 
@@ -99,14 +99,12 @@ Introduce a code sample with its purpose. Include the file or command context an
 
 Keep code and terminal output as selectable text. Explain a diagram's meaning in prose, provide useful alt text for informative images, and use empty alt text for decoration. Use a logical heading hierarchy and meaningful link text. Do not rely on color, motion, or “the box on the right” to carry the explanation. These practices follow [Google's accessible documentation guidance](https://developers.google.com/style/accessibility).
 
-## German and English parity
+## English publication
 
-- Preserve established German URLs; English content lives under `/en/`.
-- Use `lang: de` or `lang: en`, an explicit date, locale-specific `slug`, and one shared `translationKey` for counterparts. Missing `lang` keeps its existing German meaning.
-- Translate the reasoning and intended action, not English sentence structure. Check acronyms, quotation context, terminology, units, dates, and linked source versions.
-- Compare each locale's title, excerpt, evidence, conclusion, and limitations. Neither locale may gain an unsupported claim or lose a material uncertainty.
-- Show an article's language alternative only when its published counterpart exists. Never link a reader to a draft or an unrelated page as though it were the translation.
-- About pages preserve the current professional links. The existing German privacy text stays intact; English navigation identifies it as German.
+- Publish in English at `/articles/<slug>/`, with English tags, excerpts and metadata. Set `lang: en`; omitted language defaults to English.
+- Explicit German posts are excluded from public output. Keep unpublished source drafts intact until intentionally edited or removed.
+- Old `/en/` URLs redirect to existing canonical counterparts. There is no language switch.
+- Preserve professional About links and keep `/privacy/` accurate for the deployed host.
 
 ## Publication checklist
 
@@ -115,9 +113,8 @@ Keep code and terminal output as selectable text. Explain a diagram's meaning in
 - [ ] No invented personal experience, measurement, quote, citation, human review, or general outcome remains.
 - [ ] Sources and code examples were checked in the relevant context, not merely found by a link checker.
 - [ ] The explanation states material limits once, where they help interpret the claim.
-- [ ] Both language versions preserve the same conclusion and evidence boundary, when both are intended for release.
 - [ ] The rendered article has readable code, accessible headings and media, working meaningful links, and usable narrow-screen layout.
-- [ ] Metadata, dates, locale, slugs, and translations are consistent with routes, feeds, and sitemap.
+- [ ] Metadata, dates, language and slugs are consistent with routes, feeds, and sitemap.
 - [ ] Draft status is intentional. Boolean `draft: true` stays excluded from all public outputs; a future date alone is not a publishing gate.
 - [ ] No private working notes, credentials, unrelated user content, placeholder articles, blanket AI notices, or implementation bookkeeping appears publicly.
 - [ ] The relevant content/build checks pass. Editorial judgment and publication authority are still separate from automated validation.
@@ -126,6 +123,6 @@ If no article meets these criteria, keep the empty homepage state. A design refr
 
 ## Maintenance
 
-Correct a consequential factual error in both locales and describe a material correction plainly. Set a new update date only for a substantive change, if the content model supports it. Recheck articles when their central API or behavior changes; avoid implying an old result applies to a new version. Keep useful durable explanations available, with an explicit historical boundary when needed.
+Correct a consequential factual error in the published article and describe a material correction plainly. Set a new update date only for a substantive change, if the content model supports it. Recheck articles when their central API or behavior changes; avoid implying an old result applies to a new version. Keep useful durable explanations available, with an explicit historical boundary when needed.
 
 Practice can mean a small draft, a clarified example, or feedback on one paragraph. Choose the next topic from real unanswered engineering questions. Publication frequency, article length, readability scores, and numbers of citations are signals; none substitutes for reader value or factual accuracy.

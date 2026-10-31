@@ -8,11 +8,11 @@ web
 
 ## Stack
 
-User-requested rewrite: FastAPI and HTMX, with Markdown as the content source. Jinja renders HTML. The existing GitHub Pages destination can use a static export; server filtering requires the FastAPI runtime.
+User-requested rewrite: FastAPI and HTMX, with Markdown as the content source. Jinja renders HTML. Fly.io hosts the FastAPI runtime; pushes to main run verification and deployment through GitHub Actions. Static export remains optional.
 
 ## Users
 
-Inferred from the existing public copy: German- and English-speaking software practitioners reading about AI, language models and agentic engineering. The homepage helps readers find a relevant article; article pages help them understand and check its evidence.
+Inferred from the existing public copy: English-speaking software practitioners reading about AI, language models and agentic engineering. The homepage helps readers find a relevant article; article pages help them understand and check its evidence.
 
 ## Product Purpose
 
@@ -20,7 +20,7 @@ Talip Göksu's professional personal blog. Concrete examples, verifiable sources
 
 ## Capabilities and Constraints
 
-Preserve German routes, English translations, RSS, sitemap, professional About links and German privacy text. No archive, database, CMS, tracking or cookies. No invented articles or personal experience. Drafts never appear publicly. The original checkout has an untracked user article that is outside this migration.
+Publish English at the root, without a language switch. Preserve RSS, sitemap and professional About links; redirect old English/About/privacy URLs. Maintain an English privacy policy for Fly.io. No archive, database, CMS, tracking or cookies. No invented articles or personal experience. Drafts never appear publicly. The original checkout has an untracked user article that is outside this migration.
 
 ## Brand Commitments
 
@@ -28,13 +28,13 @@ Name: Talip Göksu. Understated, professional public voice with a distinctive, e
 
 ## Evidence on Hand
 
-src/config.json, src/about.md, src/about.en.md, src/datenschutz.md and two tracked draft translations. The source currently contains no published articles. Use temporary fixtures to verify article layouts.
+src/config.json, src/about.md, src/privacy.md and two tracked draft translations. The source currently contains no published articles. Use temporary fixtures to verify article layouts.
 
 ## Product Principles
 
 - Reading and finding relevant writing come first.
 - Technical claims need linked evidence; private context stays private.
-- Language changes preserve the reading context where a published counterpart exists.
+- Legacy links redirect to existing English counterparts; German posts stay excluded.
 - HTML remains usable without JavaScript.
 - A local implementation is separate from a public deployment.
 
@@ -46,4 +46,4 @@ The selected system is grounded in [the A prototype](docs/design-exploration/a.h
 
 The subject is AI broadly, coding, technology and agentic engineering. Personal context supplied to inform design remains private; it must not become public biographical copy, terminology, affiliation claims or literal identity motifs. No public content is added to make a visual direction look complete.
 
-Selected A is implemented in the actual FastAPI frontend. Local browser checks cover responsive reading, bilingual QA articles, HTMX/search history and recovery, keyboard/no-JavaScript use, table overflow, text spacing and reduced motion; [the verification record](docs/qa/selected-a/verification.md) records the evidence boundary. Source posts, About pages and privacy text remain unchanged. The site description now reflects the broader AI/coding subject, and the favicon follows the selected identity. Local acceptance and Lighthouse lab results do not establish public deployment or production field performance.
+Selected A is implemented in the actual FastAPI frontend. Local browser checks cover responsive reading, bilingual QA articles, HTMX/search history and recovery, keyboard/no-JavaScript use, table overflow, text spacing and reduced motion; [the verification record](docs/qa/selected-a/verification.md) records the evidence boundary. This describes the original local design checkpoint. The 31 October release changes About and privacy to English; posts remain drafts. The site description now reflects the broader AI/coding subject, and the favicon follows the selected identity. Local acceptance and Lighthouse lab results do not establish public deployment or production field performance.

@@ -1,0 +1,6 @@
+{% extends 'base.html' %}
+{% block content %}
+<section class="topic-page"><a class="back-link" href="{{ articles_url }}">All writing</a><h1>Topics</h1>
+{% if tags %}<ul class="tag-list">{% for item in tags %}<li><a href="{{ item.url }}">{{ item.name }} <span>({{ item.count }})</span></a></li>{% endfor %}</ul>{% else %}<p>No topics yet. Topics appear when articles are published.</p>{% endif %}
+</section>
+{% endblock %}

@@ -1,4 +1,4 @@
-"""Server-rendered bilingual blog; HTMX enhances an ordinary GET search form."""
+"""Server-rendered English blog; HTMX enhances an ordinary GET search form."""
 
 from __future__ import annotations
 
@@ -29,41 +29,6 @@ from blog.content import (
 
 ROOT = Path(__file__).resolve().parents[1]
 LABELS = {
-    "de": {
-        "notes": "Notizen",
-        "article": "Text",
-        "articles": "Texte",
-        "empty": "Noch keine Texte veröffentlicht.",
-        "emptyDetail": "Der erste Text erscheint hier, wenn er bereit ist.",
-        "readTime": "Min. Lesezeit",
-        "skip": "Zum Inhalt springen",
-        "navigation": "Hauptnavigation",
-        "footer": "Fußzeile",
-        "top": "Nach oben ↑",
-        "about": "Über diesen Blog",
-        "articleNavigation": "Artikelnavigation",
-        "intro": "KI, LLMs & Agentic Engineering",
-        "edition": "Beobachtungen aus der Praxis",
-        "more": "Über diesen Blog",
-        "topic": "Thema",
-        "topicPosts": "Texte zum Thema",
-        "search": "Texte durchsuchen",
-        "searchPlaceholder": "Thema oder Begriff",
-        "searchSubmit": "Suchen",
-        "allTopics": "Alle Themen",
-        "clear": "Zurücksetzen",
-        "noResults": "Keine passenden Texte gefunden.",
-        "noResultsDetail": "Versuche einen anderen Begriff oder wähle alle Themen.",
-        "results": "Ergebnisse",
-        "contents": "In diesem Text",
-        "back": "Alle Texte",
-        "notFound": "Diese Seite wurde nicht gefunden.",
-        "notFoundDetail": "Vielleicht wurde der Link geändert. Auf der Startseite findest du alle Texte.",
-        "loading": "Texte werden geladen …",
-        "filter": "Filtern",
-        "privacy": "Datenschutz",
-        "updated": "Aktualisiert",
-    },
     "en": {
         "notes": "Notes",
         "article": "Article",
@@ -96,7 +61,7 @@ LABELS = {
         "notFoundDetail": "The link may have changed. Find every article on the homepage.",
         "loading": "Loading articles …",
         "filter": "Filter",
-        "privacy": "Privacy (German)",
+        "privacy": "Privacy",
         "updated": "Updated",
     },
 }
@@ -171,7 +136,6 @@ def create_app(
     ):
         localized = store.localized(lang)
         raw_alternates = alternates or {}
-        other = "en" if lang == "de" else "de"
         data = {
             "@context": "https://schema.org",
             "@type": "WebSite",
@@ -207,12 +171,13 @@ def create_app(
             "description": description or localized.get("siteDescription", ""),
             "canonical": absolute(route),
             "alternates": {key: absolute(value) for key, value in raw_alternates.items()},
-            "switch_url": url(raw_alternates.get(other, HOME[other])),
-            "other_lang": other,
             "home_url": url(HOME[lang]),
+            "search_url": url(route),
             "about_url": url(store.about[lang].url),
             "feed_url": url(FEED[lang]),
-            "privacy_url": url("/datenschutz/"),
+            "privacy_url": url("/privacy/"),
+            "articles_url": url("/articles/"),
+            "tags_url": url("/tags/"),
             "sitemap_url": url("/sitemap.xml"),
             "base_path": prefix,
             "asset_version": asset_version,
@@ -256,7 +221,7 @@ def create_app(
     def page(request: Request, route: str):
         path = "/" + route
         entry = store.routes.get(path)
-        lang = "en" if path == "/en" or path.startswith("/en/") else "de"
+        lang = "en"
         if entry is None:
             if not path.endswith("/") and path + "/" in store.routes:
                 return RedirectResponse(url(path + "/"), status_code=308)
@@ -264,7 +229,9 @@ def create_app(
             return html(request, "error.html", data, 404)
         kind, value = entry
         if kind == "redirect":
-            return RedirectResponse(url(value), status_code=308)
+            return RedirectResponse(
+                url(value) + ("?" + request.url.query if request.url.query else ""), status_code=308
+            )
         if kind == "feed":
             return Response(render_feed(store, value, absolute), media_type="application/rss+xml")
         if kind == "sitemap":
@@ -273,7 +240,10 @@ def create_app(
             return Response(
                 f"User-agent: *\nAllow: /\nSitemap: {absolute('/sitemap.xml')}\n", media_type="text/plain"
             )
-        if kind == "home":
+        if kind == "tags":
+            data = context(request, "en", path, "Topics", "tag_index")
+            return html(request, "tags.html", data)
+        if kind in {"home", "articles"}:
             lang = value
             q = request.query_params.get("q", "").strip()[:200]
             tag = request.query_params.get("tag", "").strip()[:100]
@@ -295,9 +265,9 @@ def create_app(
                 request,
                 lang,
                 path,
-                store.config.get("siteTitle", ""),
-                "home",
-                HOME.copy(),
+                store.config.get("siteTitle", "") if kind == "home" else "Writing",
+                "home" if kind == "home" else "articles",
+                {},
                 posts=posts,
                 result_count=len(posts),
                 q=q,
@@ -310,7 +280,7 @@ def create_app(
             )
             return html(
                 request,
-                "_posts.html" if partial else "home.html",
+                "_posts.html" if partial else ("home.html" if kind == "home" else "articles.html"),
                 data,
                 headers={"Vary": "HX-Request, HX-History-Restore-Request"},
             )
@@ -366,35 +336,14 @@ def create_app(
     return app
 
 
-def page_alternates(store: ContentStore, route: str, kind: str, value) -> dict[str, str]:
-    if kind == "home":
-        return HOME.copy()
-    if kind == "post":
-        return value.alternates
-    if kind == "page" and value in store.about.values():
-        return {lang: page.url for lang, page in store.about.items()}
-    if kind == "tag":
-        _, name = value
-        return {
-            lang: TAG_PREFIX[lang] + store.tags[lang][name] + "/"
-            for lang in LANGUAGES
-            if name in store.tags[lang]
-        }
-    return {}
-
-
 def render_sitemap(store: ContentStore, absolute) -> str:
     urls = []
     for route, (kind, value) in store.routes.items():
-        if kind not in {"home", "post", "page", "tag"}:
+        if kind not in {"home", "articles", "tags", "post", "page", "tag"}:
             continue
-        alternates = "".join(
-            f'<xhtml:link rel="alternate" hreflang="{lang}" href="{escape(absolute(path))}"/>'
-            for lang, path in page_alternates(store, route, kind, value).items()
-        )
-        urls.append(f"<url><loc>{escape(absolute(route))}</loc>{alternates}</url>")
+        urls.append(f"<url><loc>{escape(absolute(route))}</loc></url>")
     return (
-        '<?xml version="1.0" encoding="UTF-8"?><urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9" xmlns:xhtml="http://www.w3.org/1999/xhtml">'
+        '<?xml version="1.0" encoding="UTF-8"?><urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">'
         + "\n".join(urls)
         + "</urlset>"
     )

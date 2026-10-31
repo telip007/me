@@ -43,7 +43,7 @@
       if (element.scrollWidth > element.clientWidth + 1) {
         element.tabIndex = 0;
         element.setAttribute('role', 'region');
-        element.setAttribute('aria-label', document.documentElement.lang === 'de' ? 'Horizontal scrollbarer Code oder Tabelle' : 'Horizontally scrollable code or table');
+        element.setAttribute('aria-label', 'Horizontally scrollable code or table');
       } else {
         element.removeAttribute('tabindex');
         element.removeAttribute('role');

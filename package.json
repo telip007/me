@@ -3,7 +3,7 @@
   "version": "2.0.0",
   "private": true,
   "type": "module",
-  "description": "A bilingual Markdown blog served with FastAPI and HTMX.",
+  "description": "An English Markdown blog served with FastAPI and HTMX.",
   "scripts": {
     "build": "node scripts/build.js",
     "dev": "uv run --locked uvicorn blog.main:app --reload --host 127.0.0.1 --port 8000 --reload-include \"*.md\" --reload-include \"*.json\" --reload-include \"*.html\" --reload-include \"*.css\" --reload-include \"*.js\"",

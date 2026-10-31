@@ -1,6 +1,6 @@
 ---
 name: Talip Göksu — Argument in layers
-description: A bilingual engineering publication with a wine opening, an offset paper
+description: An English engineering publication with a wine opening, an offset paper
   reading plane and a citron annotation edge.
 colors:
   wine: '#281e2a'
@@ -290,8 +290,8 @@ The A study's circular action affordance advances its arrow on deliberate hover,
 - Preserve the wine → offset paper → citron annotation relationship across routes. Do not repeat the full homepage hero above every article.
 - Use Bricolage for display/UI and Source Serif 4 for reading; keep font loading local, versioned and aligned with the active preload.
 - Preserve complete server-rendered HTML, native links, labeled GET search enhanced with HTMX, focused-form preservation, accessible request status and error recovery. Static exports omit runtime-only controls.
-- Preserve draft exclusion, real published translations, canonical URLs, RSS, sitemap and base-path behavior. German URLs and English routes under `/en/` remain intact.
-- Preserve professional About links and the existing German privacy content. English links continue identifying that privacy page as German.
+- Preserve draft exclusion, canonical English URLs, RSS, sitemap and base-path behavior. Old `/en/` counterparts redirect to the root English routes; no language switch is shown.
+- Preserve professional About links and maintain English privacy content for the actual Fly.io setup.
 - Keep code/table overflow local and keyboard reachable, native table semantics intact, long titles/URLs contained, and focus visible against each surface.
 - Keep the understated public voice. Add no invented experience, private context, identity motifs, archive, tracking, CMS, chat widget or blanket disclosure.
 - Coordinate the opening stylesheet with the reading stylesheet. Later rules must not silently restore the old palette, fonts or hero structure.
@@ -300,6 +300,6 @@ The A study's circular action affordance advances its arrow on deliberate hover,
 
 The selected-A browser pass covers 320, 390, 768 and 1440px viewports; the real empty index; bilingual QA articles; HTMX search and back navigation; failed-request recovery; no-JavaScript submission; skip-link focus; local table overflow; text-spacing overrides; and reduced motion. QA articles stay outside the live publication source. The source posts, About pages and privacy text are unchanged; the configuration description now reflects the broader AI/coding subject and the favicon follows the selected identity.
 
-The local Lighthouse run reports 99 performance, 100 accessibility, 100 best practices and 100 SEO, with LCP 1.8s and CLS 0. These are lab results for the measured route/environment, not production Core Web Vitals, field performance or blanket accessibility certification. See [selected-A verification](docs/qa/selected-a/verification.md) for the commands, captures and scope.
+The final selected-A local Lighthouse run reports 98 performance, 100 accessibility, 100 best practices and 100 SEO, with LCP 1.9s and CLS 0. These are lab results for the measured route/environment, not production Core Web Vitals, field performance or blanket accessibility certification. See [selected-A verification](docs/qa/selected-a/verification.md) for the commands, captures and scope.
 
 Selection proves direction; a screenshot proves its captured state; tests prove their covered contracts. Public deployment and physical-device/assistive-technology certification are separate and are not claimed here.

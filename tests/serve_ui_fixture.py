@@ -61,30 +61,23 @@ def serve(port=8001):
         shutil.copytree(ROOT / "src", source)
         shutil.rmtree(source / "posts")
         (source / "posts").mkdir()
-        for lang, slug, title in [
-            ("de", "leseprobe", "Wie eine technische Erklärung überprüfbar wird"),
-            ("en", "reading-check", "How to make a technical explanation verifiable"),
-        ]:
-            metadata = {
-                "title": title,
-                "slug": slug,
-                "lang": lang,
-                "translationKey": "reading-check",
-                "date": "2026-10-29",
-                "tags": ["LLM", "Engineering"],
-                "excerpt": "Lokale Layoutprüfung mit Code, Tabellen und Quellen. Kein veröffentlichter Artikel."
-                if lang == "de"
-                else "A local layout check with code, tables and sources. Not a published article.",
-            }
-            (source / "posts" / f"{lang}.md").write_text(
-                "---json\n" + json.dumps(metadata, ensure_ascii=False) + "\n---\n" + BODY
-            )
         metadata = {
-            "title": "Softwareentwicklungswerkzeugkettenverantwortungsabgrenzungsprüfung",
+            "title": "How to make a technical explanation verifiable",
+            "slug": "reading-check",
+            "lang": "en",
+            "date": "2026-10-29",
+            "tags": ["LLM", "Engineering"],
+            "excerpt": "A local layout check with code, tables and sources. Not a published article.",
+        }
+        (source / "posts" / "reading.md").write_text(
+            "---json\n" + json.dumps(metadata, ensure_ascii=False) + "\n---\n" + BODY
+        )
+        metadata = {
+            "title": "Softwaredevelopmenttoolchainresponsibilityboundaryverification",
             "slug": "long-title",
             "date": "2026-10-28",
             "tags": ["Engineering"],
-            "excerpt": "Lokaler Test eines sehr langen Titels.",
+            "excerpt": "A local test of an unusually long title.",
         }
         (source / "posts" / "long.md").write_text(
             "---json\n" + json.dumps(metadata, ensure_ascii=False) + "\n---\n" + BODY
