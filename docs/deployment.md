@@ -10,7 +10,7 @@ Requested 31 October 2026: publish English only, preserve selected design A, hos
 - Apex DNS uses Fly shared IPv4 and dedicated IPv6. `www` follows apex. ACME CNAME records permit certificate issuance and renewal. Preserve all email and unrelated DNS records.
 - `gddy` is the official GoDaddy CLI. Refreshable OAuth credentials are held in macOS Keychain. Future DNS work can use `gddy dns list goeksu.me --env prod`; no API key is required for this authenticated CLI path. GoDaddy CLI's default OAuth grant includes capabilities beyond DNS; mutations remain limited to the user's explicit task.
 - A private full-zone snapshot is held outside the repository at `~/.config/personal-blog/dns-before-fly-2026-10-31.json` for rollback. Do not publish account data or credentials.
-- Fly's processing agreement must be signed by the account owner; requesting it is separate from executing it. Track actual signature status separately from deployment.
+- The account owner signed Fly's processing agreement on 31 October 2026; Trust Center independently showed DPA: Signed. Requesting an agreement is separate from executing it.
 
 ## Operations
 
@@ -25,3 +25,9 @@ Rollback code through a reviewed revert on main so it follows the same pipeline.
 - [Fly security and privacy questionnaire](https://fly.io/legal/security-questionnaire/)
 - [Fly processing agreement](https://fly.io/documents)
 - [GoDaddy CLI authentication](https://developer.godaddy.com/en/docs/api-users/cli/set-up)
+
+## Verified first automatic release
+
+Commit `3ec79ef44bf653baa71766764d0b104661b01d57` reached production via [GitHub Actions run 41237060415](https://github.com/telip007/me/actions/runs/41237060415), with verify and deploy jobs both successful. Fly image labels `GH_SHA` and `org.opencontainers.image.revision` matched that commit. Machine `8d99d49ce06398` was running in `fra`, shared CPU 1x / 256 MB, with its HTTP health check passing. Image digest: `sha256:8a5edd827fceb274952f3569f8c901fed14dc68ca5d426daad507094881a5f92`.
+
+Both custom-domain certificates were issued before web DNS cutover. GoDaddy API readback confirmed the new apex A/AAAA values and identical unrelated records, including iCloud MX/SPF/DKIM. Authoritative DNS publication and cached resolver convergence are checked separately from API acceptance.
