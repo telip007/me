@@ -76,13 +76,14 @@ Run Python tests, `node --test scripts/build.test.js`, and `npm run build` after
 - `node_modules/`, `.DS_Store`, logs, and local env files should not be committed.
 - `dist/` is generated output. It is currently ignored; rebuild locally when needed.
 - Do not commit secrets or private notes.
+- For every post, keep research/source collections, thoughts, briefs, editorial notes, and working drafts outside this repository, normally under `/Users/tag/Developer/blog-drafts/`. Only the final article and its public media assets belong in the repository. Keep supporting citations in the published article itself.
 
 ## English-only editorial workflow
 
 - The public site is English-only. Canonical routes are `/`, `/articles/`, `/articles/<slug>/`, `/tags/`, `/tags/<tag>/`, `/about/`, `/privacy/` and `/rss.xml`.
 - Posts may use `lang: en`; omitted `lang` defaults to English. Files explicitly marked `lang: de` remain local and are excluded from every public page, search result, tag, feed, sitemap and redirect target. Do not translate or publish them automatically.
 - Preserve old `/en/` counterparts as permanent redirects to existing canonical English routes. `/ueber-mich/` redirects to `/about/`, and `/datenschutz/` to `/privacy/`. Never generate public German content or language-switch navigation.
-- Keep unpublished material in `drafts/` or mark it with boolean `draft: true`. Drafts must never leak. Future dates are not a publishing gate.
+- Keep unpublished material outside the repository. Boolean `draft: true` remains a parser safeguard, not a place to store working drafts. Drafts must never leak. Future dates are not a publishing gate.
 - Never include an unrelated untracked user post in a publication commit. Inspect git status and stage only files explicitly part of the task.
 - The public About source is `src/about.md`. Preserve its professional links unless asked to remove them. Privacy is `src/privacy.md`; keep the hosting details accurate.
 - Do not add blanket AI-creation notices to individual articles or shared templates, replacement disclaimers, or a central disclosure page. Preserve substantive AI content, sources and factual evidence limits. Do not claim Talip personally wrote or reviewed autonomous articles. Talip retains responsibility for direction and operation.

@@ -26,7 +26,7 @@ Avoid broad subjects such as “Thoughts on caching.” A more useful working qu
 
 ### Write a short brief
 
-Keep this brief in `drafts/` or another private working document. It is not additional required front matter.
+Keep this brief outside the repository, normally under `/Users/tag/Developer/blog-drafts/`. The same applies to post research, collected sources, thoughts, editorial notes, and working drafts. Only the final article and its public media assets belong in the repository; supporting citations stay in the article. The brief is not additional required front matter.
 
 | Question | Required answer |
 | --- | --- |
