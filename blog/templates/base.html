@@ -21,14 +21,22 @@
   <meta property="og:url" content="{{ canonical }}">
   <meta property="og:type" content="{{ 'article' if post is defined else 'website' }}">
   <meta property="og:locale" content="en_GB">
-  <meta name="twitter:card" content="{{ 'summary_large_image' if post is defined and post.image else 'summary' }}">
+  <meta name="twitter:card" content="{{ 'summary_large_image' if share_image else 'summary' }}">
   <meta name="twitter:title" content="{{ title }}">
   <meta name="twitter:description" content="{{ description }}">
   {% if config.twitterHandle %}<meta name="twitter:creator" content="{{ config.twitterHandle }}">{% endif %}
   {% if post is defined %}
   <meta property="article:published_time" content="{{ post.date }}">
   <meta property="article:modified_time" content="{{ post.updated or post.date }}">
-  {% if post.image %}<meta property="og:image" content="{{ post.image }}"><meta name="twitter:image" content="{{ post.image }}">{% endif %}
+  <meta property="og:image" content="{{ share_image }}">
+  <meta name="twitter:image" content="{{ share_image }}">
+  <meta property="og:image:alt" content="{{ post.title }} — {{ config.siteTitle }}">
+  <meta name="twitter:image:alt" content="{{ post.title }} — {{ config.siteTitle }}">
+  {% if generated_image %}
+  <meta property="og:image:type" content="image/png">
+  <meta property="og:image:width" content="{{ share_width }}">
+  <meta property="og:image:height" content="{{ share_height }}">
+  {% endif %}
   {% endif %}
   <script type="application/ld+json">{{ json_ld|safe }}</script>
   {% if not static_export and page_type in ['home', 'articles'] and all_posts %}

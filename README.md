@@ -106,3 +106,11 @@ Do not commit `dist/`, `.venv/`, private source material or credentials. The ori
 Code is MIT-licensed. Articles and personal content are © Talip Göksu, all rights reserved unless stated otherwise. Vendored fonts and HTMX retain their own included licenses.
 
 Final selected-A verification and screenshots: [verification report](docs/qa/selected-a/verification.md). The earlier blue/white report records a rejected design checkpoint.
+
+## Automatic share previews
+
+Public articles without an explicit front-matter `image` receive a generated 1200 × 630 PNG share card. The card uses the article title, first two topics, publication date and the site's existing visual identity. Open Graph, Twitter cards and JSON-LD point to the same absolute image URL. No manual image creation, external rendering service or browser process is required.
+
+Cards are served under `/social/<slug>/<version>.png` and included in the optional static export. The version changes with card metadata, renderer code or font, allowing long-lived image caching while edited articles advertise a fresh URL. Only public English posts enter the generator. Existing custom `image` values take precedence. Sharing platforms may retain an older page preview until they fetch the article again.
+
+The FastAPI runtime also serves the current card for an older version URL of a still-public article, with revalidation required. This avoids broken previews when a crawler retains earlier metadata. Removed or private articles remain unavailable. The optional static export contains only the current versions.

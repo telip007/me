@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import hashlib
 import json
+import re
 from datetime import UTC, datetime
 from email.utils import format_datetime
 from pathlib import Path
@@ -26,6 +27,7 @@ from blog.content import (
     load_content,
     normalize_base_path,
 )
+from blog.social import HEIGHT, WIDTH, card_content, card_path, render_card
 
 ROOT = Path(__file__).resolve().parents[1]
 LABELS = {
@@ -96,6 +98,12 @@ def create_app(
     app.state.static_dir = assets
     app.state.source_dir = source
     app.state.static_export = static_export
+    social_cards = {
+        card_path(post, store.config): card_content(post, store.config)
+        for post in store.posts if not post.image
+    }
+    app.state.social_cards = social_cards
+    social_by_slug = {post.slug: card_path(post, store.config) for post in store.posts if not post.image}
     if assets.is_dir():
         api.mount("/static", StaticFiles(directory=assets), name="static")
 
@@ -120,7 +128,7 @@ def create_app(
             response.headers["Cache-Control"] = (
                 "public, max-age=31536000, immutable" if request.url.query else "public, max-age=3600"
             )
-        else:
+        elif "Cache-Control" not in response.headers:
             response.headers["Cache-Control"] = "no-cache"
         return response
 
@@ -144,8 +152,14 @@ def create_app(
             "description": localized.get("siteDescription", ""),
             "inLanguage": lang,
         }
+        share_image = None
+        generated_image = False
         if page_type == "post":
             post = extra["post"]
+            generated_image = not post.image
+            share_image = post.image or absolute(card_path(post, store.config))
+            if share_image.startswith("/") and not share_image.startswith("//"):
+                share_image = absolute(share_image)
             data = {
                 "@context": "https://schema.org",
                 "@type": "BlogPosting",
@@ -157,8 +171,7 @@ def create_app(
                 "mainEntityOfPage": {"@type": "WebPage", "@id": absolute(route)},
                 "author": {"@type": "Person", "name": localized.get("author", "")},
             }
-            if post.image:
-                data["image"] = post.image
+            data["image"] = share_image
         localized_posts = store.for_language(lang)
         labels = LABELS[lang]
         return {
@@ -181,6 +194,10 @@ def create_app(
             "sitemap_url": url("/sitemap.xml"),
             "base_path": prefix,
             "asset_version": asset_version,
+            "share_image": share_image,
+            "generated_image": generated_image,
+            "share_width": WIDTH,
+            "share_height": HEIGHT,
             "year": datetime.now(UTC).year,
             "static_export": static_export,
             "json_ld": json.dumps(data, ensure_ascii=False, indent=2).replace("<", "\\u003c"),
@@ -220,6 +237,22 @@ def create_app(
     )
     def page(request: Request, route: str):
         path = "/" + route
+        card_route = path if path in social_cards else None
+        if card_route is None and (match := re.fullmatch(r"/social/([a-z0-9-]+)/[a-f0-9]{20}\.png", path)):
+            # A crawler may have cached the previous HTML before an edit/deploy.
+            # Only still-public posts qualify; stale URLs must never be immutable.
+            card_route = social_by_slug.get(match[1])
+        if card_route:
+            etag = '"' + card_route.rsplit("/", 1)[-1].removesuffix(".png") + '"'
+            cache = "public, max-age=31536000, immutable" if card_route == path else "no-cache"
+            headers = {"Cache-Control": cache, "ETag": etag}
+            validators = [
+                value.strip().removeprefix("W/")
+                for value in request.headers.get("if-none-match", "").split(",")
+            ]
+            if etag in validators or "*" in validators:
+                return Response(status_code=304, headers=headers)
+            return Response(render_card(social_cards[card_route]), media_type="image/png", headers=headers)
         entry = store.routes.get(path)
         lang = "en"
         if entry is None:

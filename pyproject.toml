@@ -12,6 +12,7 @@ dependencies = [
   "httpx>=0.28,<1",
   "linkify-it-py>=2,<3",
   "starlette>=0.46,<1.0",
+  "pillow>=12.1,<13",
 ]
 
 [dependency-groups]

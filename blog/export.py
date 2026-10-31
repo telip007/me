@@ -65,6 +65,12 @@ def export_site(
             if response.status_code != 404:
                 raise RuntimeError("Expected a rendered 404 page")
             (staging / "404.html").write_text(response.text)
+            for route in app.state.social_cards:
+                response = client.get(prefix + route)
+                response.raise_for_status()
+                destination = staging / route.lstrip("/")
+                destination.parent.mkdir(parents=True, exist_ok=True)
+                destination.write_bytes(response.content)
         if app.state.static_dir.is_dir():
             shutil.copytree(app.state.static_dir, staging / "static")
         shutil.copyfile(source / "favicon.svg", staging / "favicon.svg")

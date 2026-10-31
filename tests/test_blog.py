@@ -1,5 +1,6 @@
 import json
 import re
+from urllib.parse import urlsplit
 
 import pytest
 from fastapi.testclient import TestClient
@@ -7,6 +8,81 @@ from fastapi.testclient import TestClient
 from blog.content import ContentError, load_content
 from blog.export import export_site
 from blog.main import create_app
+
+
+def social_image(page):
+    match = re.search(r'<meta property="og:image" content="([^"]+)"', page)
+    assert match, "Every public article needs a share image"
+    return match[1]
+
+
+def test_generated_share_card_metadata_and_image(source):
+    post(source, meta='slug: models\ntitle: "Models & agents"')
+    client = TestClient(create_app(source_dir=source, base_path="/me"))
+    page = client.get("/me/articles/models/").text
+    image = social_image(page)
+    assert image.startswith("https://example.test/me/social/")
+    assert 'name="twitter:card" content="summary_large_image"' in page
+    assert f'name="twitter:image" content="{image}"' in page
+    assert 'property="og:image:width" content="1200"' in page
+    assert 'property="og:image:height" content="630"' in page
+    assert 'property="og:image:alt"' in page
+    assert json.loads(re.search(r'application/ld\+json">(.*?)</script>', page, re.DOTALL)[1])["image"] == image
+    response = client.get(urlsplit(image).path)
+    assert response.status_code == 200
+    assert response.headers["content-type"] == "image/png"
+    assert response.content[:8] == b"\x89PNG\r\n\x1a\n"
+    assert int.from_bytes(response.content[16:20], "big") == 1200
+    assert int.from_bytes(response.content[20:24], "big") == 630
+    assert len(response.content) < 300_000
+    assert "immutable" in response.headers["cache-control"]
+    assert client.head(urlsplit(image).path).status_code == 200
+    assert client.get(urlsplit(image).path, headers={"If-None-Match": response.headers["etag"]}).status_code == 304
+
+
+def test_share_cards_are_individual_and_change_with_content(source):
+    post(source, meta="slug: first\ntitle: First article")
+    post(source, "second", "slug: second\ntitle: Second article")
+    client = TestClient(create_app(source_dir=source))
+    first = social_image(client.get("/articles/first/").text)
+    second = social_image(client.get("/articles/second/").text)
+    assert first != second
+    assert client.get(urlsplit(first).path).content != client.get(urlsplit(second).path).content
+    post(source, meta="slug: first\ntitle: An edited title")
+    updated = TestClient(create_app(source_dir=source))
+    current = social_image(updated.get("/articles/first/").text)
+    assert current != first
+    stale = updated.get(urlsplit(first).path)
+    assert stale.status_code == 200
+    assert stale.content == updated.get(urlsplit(current).path).content
+    assert stale.headers["cache-control"] == "no-cache"
+    post(source, meta="slug: first\ndraft: true")
+    private = TestClient(create_app(source_dir=source))
+    assert private.get(urlsplit(first).path).status_code == 404
+
+
+def test_share_cards_preserve_custom_images_and_exclude_private_posts(source, tmp_path):
+    post(source, meta="slug: custom\nimage: https://cdn.example.test/cover.jpg")
+    post(source, "secret", "slug: secret\ndraft: true")
+    post(source, "german", "slug: german\nlang: de")
+    client = TestClient(create_app(source_dir=source))
+    assert social_image(client.get("/articles/custom/").text) == "https://cdn.example.test/cover.jpg"
+    for route in ["/social/secret.png", "/social/german.png", "/social/unknown/123.png"]:
+        assert client.get(route).status_code == 404
+    output = export_site(source_dir=source, output_dir=tmp_path / "dist")
+    assert not (output / "social").exists()
+
+
+def test_static_export_includes_generated_share_images(source, tmp_path):
+    post(source, meta="slug: models")
+    config = json.loads((source / "config.json").read_text())
+    config["basePath"] = "/me"
+    (source / "config.json").write_text(json.dumps(config))
+    output = export_site(source_dir=source, output_dir=tmp_path / "dist")
+    image = social_image((output / "articles/models/index.html").read_text())
+    path = urlsplit(image).path.removeprefix("/me/")
+    assert (output / path).read_bytes().startswith(b"\x89PNG")
+    assert len(list((output / "social").rglob("*.png"))) == 1
 
 
 @pytest.fixture
