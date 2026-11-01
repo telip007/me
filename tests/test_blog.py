@@ -418,3 +418,121 @@ def test_german_content_never_leaks_into_any_public_surface(source, tmp_path):
         assert "GERMAN_PRIVATE_MARKER" not in path.read_text()
         assert "DRAFT_PRIVATE_MARKER" not in path.read_text()
         assert 'lang="de"' not in path.read_text()
+
+
+def test_inline_styles_are_csp_authorized_and_fonts_discovered_early(source):
+    import base64
+    import hashlib
+
+    post(source, meta="slug: readable")
+    client = TestClient(create_app(source_dir=source, base_path="/me"))
+    for route in ["/", "/articles/", "/articles/readable/", "/about/", "/missing/"]:
+        response = client.get("/me" + route)
+        assert 'rel="stylesheet"' not in response.text
+        styles = re.findall(r'<style[^>]*>(.*?)</style>', response.text, re.DOTALL)
+        assert styles
+        for style in styles:
+            digest = base64.b64encode(hashlib.sha256(style.encode()).digest()).decode()
+            assert f"'sha256-{digest}'" in response.headers["content-security-policy"]
+        assert "unsafe-inline" not in response.headers["content-security-policy"]
+        for font_url in re.findall(r"url\('([^']+)'\)", "".join(styles)):
+            assert font_url.startswith("/me/static/fonts/")
+            assert client.get(font_url).status_code == 200
+        preloads = re.findall(r'<link rel="preload"[^>]*>', response.text)
+        assert len(preloads) == (2 if route in ["/articles/readable/", "/about/"] else 1)
+        assert all(client.get(re.search(r'href="([^"]+)"', link)[1]).status_code == 200 for link in preloads)
+
+
+def test_security_headers_and_static_cache_fingerprints(source):
+    import hashlib
+
+    from blog.main import ROOT
+
+    app = create_app(source_dir=source)
+    http = TestClient(app)
+    https = TestClient(app, base_url="https://example.test")
+    for route in ["/", "/missing/", "/healthz", "/static/site.css"]:
+        response = https.get(route)
+        assert response.headers["strict-transport-security"] == "max-age=31536000"
+        assert response.headers["cross-origin-opener-policy"] == "same-origin"
+        # HSTS must survive TLS termination at the hosting proxy; HTTP clients ignore it.
+        assert http.get(route).headers["strict-transport-security"] == "max-age=31536000"
+    version = hashlib.sha256((ROOT / "blog/static/site.js").read_bytes()).hexdigest()[:12]
+    path = f"/static/site.js?v={version}"
+    response = http.get(path)
+    assert "immutable" in response.headers["cache-control"]
+    cached = http.get(path, headers={"If-None-Match": response.headers["etag"]})
+    assert cached.status_code == 304
+    assert "immutable" in cached.headers["cache-control"]
+    for path in ["/static/site.js?v=old", "/static/site.js?anything=yes", "/static/absent.css?v=123"]:
+        assert "immutable" not in http.get(path).headers["cache-control"]
+
+
+def test_htmx_history_and_timeout_are_explicit(source):
+    post(source)
+    client = TestClient(create_app(source_dir=source))
+    for route in ["/", "/articles/"]:
+        page = client.get(route).text
+        config = json.loads(re.search(r'name="htmx-config" content=\'(.*?)\'', page)[1])
+        assert config["historyRestoreAsHxRequest"] is False
+        assert 0 < config["timeout"] <= 15000
+        assert config["allowEval"] is False
+        assert config["allowScriptTags"] is False
+        assert config["selfRequestsOnly"] is True
+
+
+def test_discovery_is_public_only_and_exportable(source, tmp_path):
+    post(source, meta='slug: visible\ntitle: "A [visible] article"')
+    post(source, "secret", "slug: secret\ndraft: true", "PRIVATE_MARKER")
+    post(source, "german", "slug: geheim\nlang: de", "GERMAN_MARKER")
+    app = create_app(source_dir=source, base_path="/me")
+    client = TestClient(app)
+    llms = client.get("/me/llms.txt")
+    assert llms.status_code == 200
+    assert llms.headers["content-type"].startswith("text/plain")
+    assert llms.text.startswith("# Example\n")
+    assert "https://example.test/me/articles/visible/" in llms.text
+    assert "https://example.test/me/about/" in llms.text
+    for route in ["/.well-known/ai-catalog.json", "/.well-known/ard.json"]:
+        response = client.get("/me" + route)
+        assert response.status_code == 200
+        catalog = response.json()
+        assert catalog["specVersion"] == "1.0"
+        assert catalog["entries"]
+        for entry in catalog["entries"]:
+            resource = client.get(urlsplit(entry["url"]).path)
+            assert resource.status_code == 200
+            assert resource.headers["content-type"].split(";")[0] == entry["type"]
+        assert client.head("/me" + route).status_code == 200
+        assert not client.head("/me" + route).content
+        for private in ["secret", "geheim", "PRIVATE_MARKER", "GERMAN_MARKER"]:
+            assert private not in response.text + llms.text
+    page = client.get("/me/").text
+    assert 'rel="describedby"' in page and 'href="/me/llms.txt"' in page
+    assert 'rel="ai-catalog"' in page and 'rel="ard"' in page
+    assert "Agentmap: https://example.test/me/.well-known/ard.json" in client.get("/me/robots.txt").text
+    output = export_site(source, tmp_path / "out")
+    assert (output / "llms.txt").is_file()
+    assert json.loads((output / ".well-known/ai-catalog.json").read_text())["entries"]
+    assert (output / ".well-known/ard.json").is_file()
+    for file in [output / "llms.txt", output / ".well-known/ai-catalog.json"]:
+        assert "secret" not in file.read_text()
+
+
+def test_share_card_urls_change_when_pillow_renderer_changes(source, monkeypatch):
+    import importlib
+
+    import PIL
+
+    from blog import social
+
+    post(source, meta="slug: rendering")
+    store = load_content(source)
+    before = social.card_path(store.posts[0], store.config)
+    try:
+        with monkeypatch.context() as patch:
+            patch.setattr(PIL, "__version__", "future-renderer-version")
+            importlib.reload(social)
+            assert social.card_path(store.posts[0], store.config) != before
+    finally:
+        importlib.reload(social)

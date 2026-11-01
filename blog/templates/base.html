@@ -12,9 +12,13 @@
 
   <link rel="alternate" type="application/rss+xml" title="{{ config.siteTitle }} — {{ lang|upper }}" href="{{ feed_url }}">
   <link rel="icon" href="{{ url('/favicon.svg') }}" type="image/svg+xml">
-  <link rel="preload" href="{{ url('/static/fonts/BricolageGrotesque.woff2') }}?v=89c140b3bc41" as="font" type="font/woff2" crossorigin>
-  <link rel="stylesheet" href="{{ url('/static/site.css') }}?v={{ asset_version }}">
-  <link rel="stylesheet" href="{{ url('/static/reading.css') }}?v={{ asset_version }}">
+  <link rel="describedby" href="{{ llms_url }}" type="text/plain">
+  <link rel="ai-catalog" href="{{ catalog_url }}" type="application/ai-catalog+json">
+  <link rel="ard" href="{{ ard_url }}" type="application/ai-catalog+json">
+  <link rel="preload" href="{{ asset_url('fonts/BricolageGrotesque.woff2') }}" as="font" type="font/woff2" crossorigin>
+  {% if page_type in ['post', 'page'] %}<link rel="preload" href="{{ asset_url('fonts/SourceSerif4-Regular.woff2') }}" as="font" type="font/woff2" crossorigin>{% endif %}
+  <style>{{ styles.site|safe }}</style>
+  {% if page_type != 'home' %}<style>{{ styles.reading|safe }}</style>{% endif %}
   <meta property="og:site_name" content="{{ config.siteTitle }}">
   <meta property="og:title" content="{{ title }}">
   <meta property="og:description" content="{{ description }}">
@@ -40,10 +44,10 @@
   {% endif %}
   <script type="application/ld+json">{{ json_ld|safe }}</script>
   {% if not static_export and page_type in ['home', 'articles'] and all_posts %}
-  <meta name="htmx-config" content='{"allowEval":false,"allowScriptTags":false,"selfRequestsOnly":true,"historyCacheSize":0,"includeIndicatorStyles":false}'>
-  <script src="{{ url('/static/htmx.min.js') }}?v={{ asset_version }}" defer></script>
+  <meta name="htmx-config" content='{"allowEval":false,"allowScriptTags":false,"selfRequestsOnly":true,"historyCacheSize":0,"includeIndicatorStyles":false,"historyRestoreAsHxRequest":false,"timeout":10000}'>
+  <script src="{{ asset_url('htmx.min.js') }}" defer></script>
   {% endif %}
-  {% if post is defined or (page_type in ['home', 'articles'] and all_posts and not static_export) %}<script src="{{ url('/static/site.js') }}?v={{ asset_version }}" defer></script>{% endif %}
+  {% if post is defined or (page_type in ['home', 'articles'] and all_posts and not static_export) %}<script src="{{ asset_url('site.js') }}" defer></script>{% endif %}
 </head>
 <body class="{{ page_type }}-page" hx-history="false" data-static-export="{{ 'true' if static_export else 'false' }}">
   <a class="skip-link" href="#content">Skip to content</a>

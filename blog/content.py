@@ -279,6 +279,9 @@ def load_content(source_dir: str | Path) -> ContentStore:
         add(legacy, "redirect", target)
     add("/sitemap.xml", "sitemap", None)
     add("/robots.txt", "robots", None)
+    add("/llms.txt", "llms", None)
+    add("/.well-known/ai-catalog.json", "catalog", None)
+    add("/.well-known/ard.json", "catalog", None)
     posts = []
     pairs = {}
     tags = {lang: {} for lang in LANGUAGES}

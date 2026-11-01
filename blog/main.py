@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import base64
 import hashlib
 import json
 import re
@@ -83,13 +84,28 @@ def create_app(
     store.config["basePath"] = prefix
     templates = Jinja2Templates(directory=str(ROOT / "blog" / "templates"))
     templates.env.filters["format_date"] = format_date
-    asset_digest = hashlib.sha256()
-    if assets.is_dir():
-        for item in sorted(assets.rglob("*")):
-            if item.is_file():
-                asset_digest.update(item.relative_to(assets).as_posix().encode())
-                asset_digest.update(item.read_bytes())
-    asset_version = asset_digest.hexdigest()[:12]
+    asset_versions = {
+        item.relative_to(assets).as_posix(): hashlib.sha256(item.read_bytes()).hexdigest()[:12]
+        for item in sorted(assets.rglob("*")) if item.is_file()
+    }
+
+    def asset_url(name: str) -> str:
+        return f"{prefix}/static/{name}?v={asset_versions[name]}"
+
+    def inline_css(name: str) -> str:
+        # Only trusted repository CSS is embedded. Fonts must resolve from the document URL.
+        css = (assets / name).read_text() if (assets / name).is_file() else ""
+        return re.sub(
+            r"url\('fonts/([^'?]+)(?:\?[^']*)?'\)",
+            lambda match: f"url('{asset_url('fonts/' + match[1])}')",
+            css,
+        )
+
+    styles = {"site": inline_css("site.css"), "reading": inline_css("reading.css")}
+    style_hashes = " ".join(
+        "'sha256-" + base64.b64encode(hashlib.sha256(css.encode()).digest()).decode() + "'"
+        for css in styles.values()
+    )
     app = FastAPI(docs_url=None, redoc_url=None, openapi_url=None)
     api = FastAPI(docs_url=None, redoc_url=None, openapi_url=None) if prefix else app
     app.add_middleware(GZipMiddleware, minimum_size=1000, compresslevel=5)
@@ -119,14 +135,23 @@ def create_app(
         response.headers["X-Content-Type-Options"] = "nosniff"
         response.headers["Referrer-Policy"] = "strict-origin-when-cross-origin"
         response.headers["X-Frame-Options"] = "DENY"
+        response.headers["Cross-Origin-Opener-Policy"] = "same-origin"
+        # Fly terminates TLS before the app. Derive the policy from the configured
+        # public HTTPS origin, not arbitrary forwarded headers. Browsers ignore HSTS over HTTP.
+        if store.config["siteUrl"].startswith("https://"):
+            response.headers["Strict-Transport-Security"] = "max-age=31536000"
         response.headers["Permissions-Policy"] = "camera=(), microphone=(), geolocation=()"
         response.headers["Content-Security-Policy"] = (
-            "default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self' https: data:; "
+            f"default-src 'self'; script-src 'self'; style-src 'self' {style_hashes}; img-src 'self' https: data:; "
             "font-src 'self'; connect-src 'self'; object-src 'none'; base-uri 'self'; frame-ancestors 'none'; form-action 'self'"
         )
         if request.url.path.startswith(url("/static/")):
+            name = request.url.path.removeprefix(url("/static/"))
+            version = request.query_params.get("v")
+            fingerprint_matches = version is not None and version == asset_versions.get(name)
             response.headers["Cache-Control"] = (
-                "public, max-age=31536000, immutable" if request.url.query else "public, max-age=3600"
+                "public, max-age=31536000, immutable"
+                if response.status_code in {200, 304} and fingerprint_matches else "no-cache"
             )
         elif "Cache-Control" not in response.headers:
             response.headers["Cache-Control"] = "no-cache"
@@ -193,7 +218,11 @@ def create_app(
             "tags_url": url("/tags/"),
             "sitemap_url": url("/sitemap.xml"),
             "base_path": prefix,
-            "asset_version": asset_version,
+            "asset_url": asset_url,
+            "styles": styles,
+            "llms_url": url("/llms.txt"),
+            "catalog_url": url("/.well-known/ai-catalog.json"),
+            "ard_url": url("/.well-known/ard.json"),
             "share_image": share_image,
             "generated_image": generated_image,
             "share_width": WIDTH,
@@ -269,9 +298,14 @@ def create_app(
             return Response(render_feed(store, value, absolute), media_type="application/rss+xml")
         if kind == "sitemap":
             return Response(render_sitemap(store, absolute), media_type="application/xml")
+        if kind == "llms":
+            return Response(render_llms(store, absolute), media_type="text/plain")
+        if kind == "catalog":
+            return JSONResponse(render_catalog(store, absolute), media_type="application/ai-catalog+json")
         if kind == "robots":
             return Response(
-                f"User-agent: *\nAllow: /\nSitemap: {absolute('/sitemap.xml')}\n", media_type="text/plain"
+                f"User-agent: *\nAllow: /\nSitemap: {absolute('/sitemap.xml')}\n"
+                f"Agentmap: {absolute('/.well-known/ard.json')}\n", media_type="text/plain"
             )
         if kind == "tags":
             data = context(request, "en", path, "Topics", "tag_index")
@@ -367,6 +401,49 @@ def create_app(
     if prefix:
         app.mount(prefix, api)
     return app
+
+
+def render_llms(store: ContentStore, absolute) -> str:
+    # Escape Markdown labels and keep each entry on one line; never read draft sources here.
+    def label(value):
+        return re.sub(r"([\\`*{}\[\]<>])", r"\\\1", " ".join(str(value).split()))
+
+    lines = [
+        f"# {label(store.config['siteTitle'])}", "",
+        f"> {label(store.config.get('siteDescription', ''))}", "",
+        ("This English-language blog publishes articles on software and society. "
+         "The links below refer to public content; article sources are linked within each article."), "",
+        "## Site", "",
+        f"- [Writing]({absolute('/articles/')}): All public articles.",
+        f"- [Topics]({absolute('/tags/')}): Browse articles by topic.",
+        f"- [About]({absolute(store.about['en'].url)}): About this blog.",
+        f"- [RSS]({absolute('/rss.xml')}): Article feed.",
+        f"- [Sitemap]({absolute('/sitemap.xml')}): Canonical public URLs.", "",
+        "## Articles", "",
+    ]
+    lines.extend(f"- [{label(post.title)}]({absolute(post.url)}): {label(post.excerpt)}" for post in store.posts)
+    return "\n".join(lines) + "\n"
+
+
+def render_catalog(store: ContentStore, absolute) -> dict:
+    from urllib.parse import urlsplit
+
+    publisher = urlsplit(store.config["siteUrl"]).hostname
+    resources = [
+        ("overview", "Blog overview for LLMs", "text/plain", "/llms.txt"),
+        ("writing", "Writing", "text/html", "/articles/"),
+        ("feed", "Article feed", "application/rss+xml", "/rss.xml"),
+        ("sitemap", "Public sitemap", "application/xml", "/sitemap.xml"),
+    ]
+    return {
+        "specVersion": "1.0",
+        "host": {"displayName": store.config["siteTitle"]},
+        "entries": [
+            {"identifier": f"urn:air:{publisher}:blog:{key}", "displayName": name,
+             "type": media_type, "url": absolute(route)}
+            for key, name, media_type, route in resources
+        ],
+    }
 
 
 def render_sitemap(store: ContentStore, absolute) -> str:

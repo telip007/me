@@ -19,9 +19,8 @@
     document.body.addEventListener('htmx:afterRequest', event => {
       if (!form.contains(event.detail.elt)) return;
       document.querySelector('#posts')?.removeAttribute('aria-busy');
-      if (!event.detail.successful && !event.detail.xhr?.status) {
-        if (error) error.hidden = false;
-      }
+      // Aborted requests are normal with hx-sync="this:replace".
+      // Dedicated error events below distinguish actual failures from replacement.
     });
     for (const name of ['htmx:responseError', 'htmx:sendError', 'htmx:timeout']) {
       document.body.addEventListener(name, event => {

@@ -7,7 +7,7 @@
   "scripts": {
     "build": "node scripts/build.js",
     "dev": "uv run --locked uvicorn blog.main:app --reload --host 127.0.0.1 --port 8000 --reload-include \"*.md\" --reload-include \"*.json\" --reload-include \"*.html\" --reload-include \"*.css\" --reload-include \"*.js\"",
-    "test": "uv run --locked pytest && node --test scripts/build.test.js",
+    "test": "uv run --locked pytest && node --test scripts/build.test.js scripts/site.test.js",
     "clean": "node scripts/clean.js"
   }
 }

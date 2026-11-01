@@ -9,6 +9,7 @@ from io import BytesIO
 from pathlib import Path
 from urllib.parse import urlsplit
 
+import PIL
 from PIL import Image, ImageDraw, ImageFont
 
 from blog.content import Post
@@ -16,8 +17,10 @@ from blog.content import Post
 WIDTH, HEIGHT = 1200, 630
 FONT = Path(__file__).parent / "static/fonts/BricolageGrotesque-Social.ttf"
 WINE, PAPER, CITRON, MUTED = "#281e2a", "#eee9dc", "#e1ec93", "#655868"
-# Invalidate cached URLs whenever the renderer or font changes.
-STYLE_VERSION = hashlib.sha256(Path(__file__).read_bytes() + FONT.read_bytes()).hexdigest()
+# Invalidate cached URLs whenever renderer code, Pillow or the font changes.
+STYLE_VERSION = hashlib.sha256(
+    Path(__file__).read_bytes() + FONT.read_bytes() + PIL.__version__.encode()
+).hexdigest()
 
 
 def card_content(post: Post, config: dict) -> tuple[str, ...]:

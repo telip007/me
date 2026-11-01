@@ -8,6 +8,6 @@ No asset is loaded from a third-party origin at runtime.
 - `site.css`, `reading.css`, `site.js`, and geometric identity mark: original project implementation.
 - `fonts/BricolageGrotesque-Social.ttf`: derived from the same licensed local WOFF2 using FontTools, with weight 650 and optical size 48 fixed. Used by Pillow for automatic share cards; no external font request or browser process is needed. The existing Bricolage OFL license applies.
 
-Retrieved 2026-10-29. Fonts use `font-display: swap`; only the primary display font is preloaded. Decorative page transitions are progressive enhancement and disabled for reduced motion.
+Retrieved 2026-10-29. Fonts use `font-display: swap`. The primary display font is preloaded; prose pages also preload the regular reading font. The small first-party stylesheets are embedded by the renderer, with font URLs rewritten to content-fingerprinted absolute local paths and exact CSP style hashes. Decorative page transitions are progressive enhancement and disabled for reduced motion.
 
 Bricolage source TTF SHA-256: `413e7357809ddd12fd80a96a8a396de0e401638d4acd3cb3e37532f0472ac682`; production WOFF2 SHA-256: `89c140b3bc41dfbf3156834945ad3eb817d1ec0090ce71674c941253e532569b`. Source retrieved again to retain typographic punctuation.
