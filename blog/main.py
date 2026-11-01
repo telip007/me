@@ -28,7 +28,7 @@ from blog.content import (
     load_content,
     normalize_base_path,
 )
-from blog.social import HEIGHT, WIDTH, card_content, card_path, render_card
+from blog.social import HEIGHT, WIDTH, card_content, card_path, page_card_path, page_cards, render_card
 
 ROOT = Path(__file__).resolve().parents[1]
 LABELS = {
@@ -118,8 +118,11 @@ def create_app(
         card_path(post, store.config): card_content(post, store.config)
         for post in store.posts if not post.image
     }
+    site_cards = page_cards(store)
+    site_card_paths = {route: page_card_path(route, card) for route, card in site_cards.items()}
+    social_cards.update({site_card_paths[route]: card for route, card in site_cards.items()})
     app.state.social_cards = social_cards
-    social_by_slug = {post.slug: card_path(post, store.config) for post in store.posts if not post.image}
+    social_by_key = {path.rsplit("/", 1)[0]: path for path in social_cards}
     if assets.is_dir():
         api.mount("/static", StaticFiles(directory=assets), name="static")
 
@@ -179,6 +182,16 @@ def create_app(
         }
         share_image = None
         generated_image = False
+        share_alt = ""
+        if route in site_cards and page_type != "error":
+            card = site_cards[route]
+            share_image = absolute(site_card_paths[route])
+            generated_image = True
+            share_alt = f"{card.title} — {card.identity}"
+            description = card.description
+            data.update({"name": title, "url": absolute(route), "description": description, "image": share_image})
+            if page_type != "home":
+                data["@type"] = "WebPage"
         if page_type == "post":
             post = extra["post"]
             generated_image = not post.image
@@ -197,6 +210,7 @@ def create_app(
                 "author": {"@type": "Person", "name": localized.get("author", "")},
             }
             data["image"] = share_image
+            share_alt = f"{post.title} — {localized.get('siteTitle', '')}"
         localized_posts = store.for_language(lang)
         labels = LABELS[lang]
         return {
@@ -224,6 +238,7 @@ def create_app(
             "catalog_url": url("/.well-known/ai-catalog.json"),
             "ard_url": url("/.well-known/ard.json"),
             "share_image": share_image,
+            "share_alt": share_alt,
             "generated_image": generated_image,
             "share_width": WIDTH,
             "share_height": HEIGHT,
@@ -267,10 +282,10 @@ def create_app(
     def page(request: Request, route: str):
         path = "/" + route
         card_route = path if path in social_cards else None
-        if card_route is None and (match := re.fullmatch(r"/social/([a-z0-9-]+)/[a-f0-9]{20}\.png", path)):
+        if card_route is None and (match := re.fullmatch(r"(/social/(?:[a-z0-9-]+/)*[a-z0-9-]+)/[a-f0-9]{20}\.png", path)):
             # A crawler may have cached the previous HTML before an edit/deploy.
-            # Only still-public posts qualify; stale URLs must never be immutable.
-            card_route = social_by_slug.get(match[1])
+            # Only still-public pages qualify; stale URLs must never be immutable.
+            card_route = social_by_key.get(match[1])
         if card_route:
             etag = '"' + card_route.rsplit("/", 1)[-1].removesuffix(".png") + '"'
             cache = "public, max-age=31536000, immutable" if card_route == path else "no-cache"

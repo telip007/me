@@ -12,7 +12,7 @@ from blog.main import create_app
 
 def social_image(page):
     match = re.search(r'<meta property="og:image" content="([^"]+)"', page)
-    assert match, "Every public article needs a share image"
+    assert match, "Every public page needs a share image"
     return match[1]
 
 
@@ -70,7 +70,9 @@ def test_share_cards_preserve_custom_images_and_exclude_private_posts(source, tm
     for route in ["/social/secret.png", "/social/german.png", "/social/unknown/123.png"]:
         assert client.get(route).status_code == 404
     output = export_site(source_dir=source, output_dir=tmp_path / "dist")
-    assert not (output / "social").exists()
+    assert not (output / "social/custom").exists()
+    assert not (output / "social/secret").exists()
+    assert not (output / "social/german").exists()
 
 
 def test_static_export_includes_generated_share_images(source, tmp_path):
@@ -82,7 +84,72 @@ def test_static_export_includes_generated_share_images(source, tmp_path):
     image = social_image((output / "articles/models/index.html").read_text())
     path = urlsplit(image).path.removeprefix("/me/")
     assert (output / path).read_bytes().startswith(b"\x89PNG")
-    assert len(list((output / "social").rglob("*.png"))) == 1
+    for route in ["", "articles", "tags", "tags/llm", "about", "privacy"]:
+        page = (output / route / "index.html").read_text()
+        image_path = urlsplit(social_image(page)).path.removeprefix("/me/")
+        assert (output / image_path).read_bytes().startswith(b"\x89PNG")
+
+
+def test_every_public_page_has_its_own_share_card(source):
+    post(source, meta="slug: models")
+    client = TestClient(create_app(source_dir=source, base_path="/me"))
+    images, cards = set(), set()
+    for route in ["/", "/articles/", "/tags/", "/tags/llm/", "/about/", "/privacy/"]:
+        page = client.get("/me" + route).text
+        image = social_image(page)
+        assert image.startswith("https://example.test/me/social/pages/")
+        assert f'name="twitter:image" content="{image}"' in page
+        assert 'name="twitter:card" content="summary_large_image"' in page
+        assert 'property="og:image:width" content="1200"' in page
+        data = json.loads(re.search(r'application/ld\+json">(.*?)</script>', page, re.DOTALL)[1])
+        assert data["image"] == image
+        assert data["url"] == "https://example.test/me" + route
+        response = client.get(urlsplit(image).path)
+        assert response.status_code == 200
+        assert response.headers["content-type"] == "image/png"
+        assert int.from_bytes(response.content[16:20], "big") == 1200
+        assert int.from_bytes(response.content[20:24], "big") == 630
+        assert len(response.content) < 300_000
+        assert client.head(urlsplit(image).path).status_code == 200
+        assert client.get(urlsplit(image).path, headers={"If-None-Match": response.headers["etag"]}).status_code == 304
+        images.add(image)
+        cards.add(response.content)
+    assert len(images) == len(cards) == 6
+    assert social_image(client.get("/me/?q=private+search").text) in images
+    assert 'property="og:image"' not in client.get("/me/missing/").text
+    assert client.get("/me/en/about/", follow_redirects=False).headers["location"] == "/me/about/"
+
+
+def test_page_share_cards_refresh_and_do_not_outlive_removed_topics(source):
+    post_path = post(source, meta="slug: models")
+    client = TestClient(create_app(source_dir=source))
+    old_home = social_image(client.get("/").text)
+    old_topic = social_image(client.get("/tags/llm/").text)
+    config = json.loads((source / "config.json").read_text())
+    config["siteSubtitle"] = "A different headline"
+    (source / "config.json").write_text(json.dumps(config))
+    post_path.unlink()
+    updated = TestClient(create_app(source_dir=source))
+    home = social_image(updated.get("/").text)
+    assert old_home != home
+    stale = updated.get(urlsplit(old_home).path)
+    assert stale.content == updated.get(urlsplit(home).path).content
+    assert stale.headers["cache-control"] == "no-cache"
+    assert updated.get(urlsplit(old_topic).path).status_code == 404
+
+
+def test_page_card_stale_urls_do_not_alias_custom_about_slug(source):
+    (source / "about.md").write_text("---\ntitle: About\nslug: home\n---\nAbout this blog.")
+    before = TestClient(create_app(source_dir=source))
+    old = social_image(before.get("/").text)
+    config = json.loads((source / "config.json").read_text())
+    config["siteSubtitle"] = "An updated headline"
+    (source / "config.json").write_text(json.dumps(config))
+    after = TestClient(create_app(source_dir=source))
+    current = social_image(after.get("/").text)
+    about = social_image(after.get("/home/").text)
+    assert after.get(urlsplit(old).path).content == after.get(urlsplit(current).path).content
+    assert after.get(urlsplit(old).path).content != after.get(urlsplit(about).path).content
 
 
 @pytest.fixture
