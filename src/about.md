@@ -1,14 +1,14 @@
 ---
 title: "About this blog"
 slug: about
-description: "AI, language models and agentic engineering. A blog by Talip Göksu."
+description: "Notes on artificial intelligence, software engineering and society. A blog by Talip Göksu."
 ---
 
 # About this blog
 
-I’m Talip Göksu, an engineering team lead at [PACE Mobility GmbH](https://pace.cloud). I also build custom IT solutions for clients through [CobTech](https://cobtech.de). I’m interested in what happens when language models move from answering questions to contributing to software.
+I’m Talip Göksu, an engineering team lead at [PACE Mobility GmbH](https://pace.cloud). I also build custom IT solutions for clients through [CobTech](https://cobtech.de).
 
-This blog covers AI, LLMs and agentic engineering: tools, experiments and their limits. What works? Where does it fail? What can we take into our own work?
+This blog is a collection of notes and reflections on artificial intelligence, software engineering and society. I’m interested in how we build technology, how it changes the way we work and how it shapes everyday life.
 
 ## AI assistance
 
