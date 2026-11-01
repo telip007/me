@@ -1,6 +1,6 @@
 # FastAPI, HTMX and PageSpeed review — 1 November 2026
 
-Scope: the existing English-only FastAPI/Jinja blog and supplied PageSpeed screenshots. This is an applicable-practices review, not a claim that every framework feature belongs in the project. Changes are local on `codex/blog-best-practices` in `/Users/tag/.codex/worktrees/blog-best-practices/personal-blog`; no push, merge into the main checkout or deployment was requested. Parallel user changes in the main checkout are preserved.
+Scope: the existing English-only FastAPI/Jinja blog and supplied PageSpeed screenshots. This is an applicable-practices review, not a claim that every framework feature belongs in the project. The initial implementation was local on `codex/blog-best-practices` in `/Users/tag/.codex/worktrees/blog-best-practices/personal-blog`. The user subsequently authorized publication. The release candidate incorporates main through `2581d06`, preserving the published page share cards and homepage copy. Unrelated uncommitted articles remain outside this branch. Release verification is recorded separately in the shared Wiki.
 
 ## Implemented
 
@@ -46,7 +46,11 @@ The WebMCP form/tool/schema rows are **not applicable** to this read-only blog. 
 - Both generated catalogs validated with `jsonschema` Draft 2020-12 + format checks against the AI Catalog schema and pinned ARD `ArdManifest` schema. Validation used temporary tooling, with no validator runtime dependency added. The separately described Pillow/Starlette security updates do change the dependency lock.
 - Before the browser restriction, one limited headless check confirmed that both inline style blocks were accepted (114 + 78 CSS rules), local fonts loaded, and one HTMX search preserved input focus and announced `1 article`. This was not a full browser acceptance run.
 - The user then requested no browser use. The task-owned headless browser was stopped. No subsequent browser work, visual QA or Lighthouse run was performed. An earlier Lighthouse launch failed before obtaining a report because its launcher could not locate Chrome. No PageSpeed score, measured 300 ms saving, field CWV improvement or full accessibility certification is claimed.
-- Public HTTPS readback still showed the previous stylesheet links and headers. This confirms the new implementation has not been released.
+- Public HTTPS readback still showed the previous stylesheet links and headers. At the initial audit checkpoint, this confirmed that the new implementation had not yet been released.
+
+## Publication preparation
+
+After the user authorized publication, main through `2581d06` was merged without conflicts. The combined candidate passes 41 Python tests under 3.12 and 3.14, 12 Node tests, Ruff, content validation, export and a rebuilt Linux image smoke with exact CSP hashes and generated cards for all canonical public pages. Browser/Lighthouse checks remain suspended.
 
 ## Primary references
 
