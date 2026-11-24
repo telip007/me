@@ -11,10 +11,13 @@ import math
 import re
 from dataclasses import dataclass, field
 from datetime import UTC, date, datetime
+from html import escape
 from html.parser import HTMLParser
+from ipaddress import IPv4Address
 from pathlib import Path
-from urllib.parse import urlsplit
+from urllib.parse import unquote, urljoin, urlsplit
 
+import idna
 import yaml
 from markdown_it import MarkdownIt
 from markupsafe import Markup
@@ -69,6 +72,47 @@ def normalize_base_path(value: str | None) -> str:
     if any(not re.fullmatch(r"[a-zA-Z0-9_-]+", part) for part in value.split("/")):
         raise ContentError("Invalid basePath")
     return "/" + value
+
+
+def validate_cover_authority(authority: str) -> None:
+    # Keep host escapes, credentials, and IPv6 zone IDs out of cover URLs.
+    match = re.fullmatch(r"(\[[0-9A-Fa-f:.]+\]|[^\[\]:%@\s]+)(?::[0-9]+)?", authority)
+    if match is None:
+        raise ValueError("Invalid cover authority")
+    host = match[1]
+    if host.startswith("["):
+        # urlsplit already validates the bracketed IPv6 address.
+        return
+
+    domain = idna.encode(host, uts46=True, std3_rules=True).decode("ascii").removesuffix(".")
+    # Browsers interpret a numeric final label as an IPv4 address.
+    if re.fullmatch(r"[0-9]+|0x[0-9a-f]*", domain.rsplit(".", 1)[-1]):
+        IPv4Address(domain)
+
+
+def cover_image(value: object, filename: str) -> str | None:
+    if value is None or value == "":
+        return None
+    error = f"image must be an HTTPS URL or a site-relative path: {filename}"
+    if not isinstance(value, str) or re.search(r"[\x00-\x1f\x7f\\]", value):
+        raise ContentError(error)
+    value = value.strip()
+    try:
+        parts = urlsplit(value)
+        if parts.scheme in {"", "https"} and parts.netloc:
+            validate_cover_authority(parts.netloc)
+            # urlsplit validates the port range only when it is read.
+            _ = parts.port
+            return value if parts.scheme else "https:" + value
+    except ValueError as exc:
+        raise ContentError(error) from exc
+    if not parts.scheme and not value.startswith("//") and parts.path and parts.path != "/":
+        # Browsers resolve encoded dot segments after the deployment prefix is added.
+        if any(unquote(segment) in {".", ".."} for segment in parts.path.split("/") if "%" in segment):
+            raise ContentError(error)
+        # Both local forms start at the blog root, before applying its deployment basePath.
+        return urljoin("/", value)
+    raise ContentError(error)
 
 
 def parse_matter(raw: str) -> tuple[dict, str]:
@@ -131,8 +175,67 @@ def visible_text(html: str) -> str:
     return re.sub(r"\s+", " ", " ".join(parser.parts)).strip()
 
 
-def render_markdown(body: str) -> tuple[Markup, list[dict]]:
+@dataclass(frozen=True)
+class Diagram:
+    title: str
+    caption: str
+    transcript: str
+    drawing: str
+
+
+def load_diagrams(directory: Path) -> dict[str, Diagram]:
+    if not directory.exists():
+        return {}
+    try:
+        manifest = json.loads((directory / "manifest.json").read_text(), object_pairs_hook=unique_pairs)
+        if not isinstance(manifest, dict):
+            raise ContentError("Expected an object keyed by diagram ID")
+        diagrams = {}
+        for name, item in manifest.items():
+            slug(name, "diagram ID")
+            fields = ("title", "caption", "transcript")
+            if not isinstance(item, dict) or any(
+                not isinstance(item.get(field), str) or not item[field].strip() for field in fields
+            ):
+                raise ContentError(f"Expected a title, caption and transcript for {name}")
+            drawing = (directory / f"{name}.txt").read_text()
+            if not drawing.strip():
+                raise ContentError(f"Empty terminal drawing: {name}")
+            diagrams[name] = Diagram(item["title"], item["caption"], item["transcript"], drawing)
+    except (OSError, ValueError) as exc:
+        raise ContentError(f"Invalid diagrams for {directory.name}: {exc}") from exc
+    return diagrams
+
+
+def render_markdown(body: str, diagrams: dict[str, Diagram] | None = None) -> tuple[Markup, list[dict]]:
     md = MarkdownIt("default", {"html": False, "breaks": False, "linkify": True})
+    default_fence = md.renderer.rules["fence"]
+    diagram_count = 0
+
+    def render_fence(tokens, index, options, env):
+        nonlocal diagram_count
+        info = tokens[index].info.split()
+        if not info or info[0] != "terminal-diagram":
+            return default_fence(tokens, index, options, env)
+        if len(info) != 2:
+            raise ContentError("Expected one ID after terminal-diagram")
+        name = info[1]
+        if diagrams is None or name not in diagrams:
+            raise ContentError(f"Unknown terminal diagram: {name}")
+        diagram = diagrams[name]
+        diagram_count += 1
+        title_id = f"diagram:{name}:{diagram_count}"
+        return (
+            '<figure class="diagram">\n'
+            f'<div class="diagram-scroll" role="region" tabindex="0" aria-labelledby="{title_id}">'
+            f'<pre aria-hidden="true">{escape(diagram.drawing)}</pre></div>\n'
+            f'<figcaption><strong id="{title_id}">{escape(diagram.title)}</strong>'
+            f'<em>{escape(diagram.caption)}</em></figcaption>\n'
+            '<details class="transcript"><summary>Text transcript</summary>'
+            f'<p>{escape(diagram.transcript)}</p></details>\n</figure>\n'
+        )
+
+    md.renderer.rules["fence"] = render_fence
     tokens = md.parse(body)
     toc = []
     used = set()
@@ -307,7 +410,7 @@ def load_content(source_dir: str | Path) -> ContentStore:
         ):
             raise ContentError(f"tags must be an array of strings: {path.name}")
         post_tags = list(dict.fromkeys(tag.strip() for tag in meta.get("tags", []) if tag.strip()))
-        html, toc = render_markdown(body)
+        html, toc = render_markdown(body, load_diagrams(source / "diagrams" / post_slug))
         plain = re.sub(r"[#>*_`~\[\]()]", " ", re.sub(r"```[\s\S]*?```", " ", body))
         post = Post(
             post_slug,
@@ -321,7 +424,7 @@ def load_content(source_dir: str | Path) -> ContentStore:
             html,
             toc,
             f"{POST_PREFIX[lang]}{post_slug}/",
-            image=str(meta["image"]) if meta.get("image") else None,
+            image=cover_image(meta.get("image"), path.name),
         )
         add(post.url, "post", post)
         add(f"/en/articles/{post_slug}/", "redirect", post.url)

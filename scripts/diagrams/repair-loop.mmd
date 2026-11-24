@@ -1,0 +1,7 @@
+flowchart TB
+  %% A loop around feature work
+  define["Define observable<br/>behavior"] --> attempt["Agent attempts<br/>a change<br/>Reads, edits,<br/>uses tools"]
+  attempt --> check["Check the<br/>behavior"]
+  check -->|Pass| inspect["Inspect + record<br/>result<br/>Then continue<br/>or finish"]
+  check -->|Retry| attempt
+  check --> stop["Fail at<br/>limit:<br/>investigate"]

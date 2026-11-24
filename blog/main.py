@@ -13,7 +13,7 @@ from xml.sax.saxutils import escape
 
 from fastapi import FastAPI, Request
 from fastapi.middleware.gzip import GZipMiddleware
-from fastapi.responses import HTMLResponse, JSONResponse, RedirectResponse, Response
+from fastapi.responses import FileResponse, HTMLResponse, JSONResponse, RedirectResponse, Response
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 
@@ -31,6 +31,15 @@ from blog.content import (
 from blog.social import HEIGHT, WIDTH, card_content, card_path, page_card_path, page_cards, render_card
 
 ROOT = Path(__file__).resolve().parents[1]
+ICONS = {
+    "favicon.svg": "image/svg+xml",
+    "favicon.ico": "image/vnd.microsoft.icon",
+    "apple-touch-icon.png": "image/png",
+}
+ENTRY_ID_CONFLICTS = {
+    "writing", "writing-title", "posts", "topic",
+    "article-search", "search-loading", "search-status", "search-error",
+}
 LABELS = {
     "en": {
         "notes": "Notes",
@@ -48,7 +57,6 @@ LABELS = {
         "intro": "AI, LLMs & Agentic Engineering",
         "edition": "Observations from practice",
         "more": "About this blog",
-        "topic": "Topic",
         "topicPosts": "Articles about",
         "search": "Search articles",
         "searchPlaceholder": "Topic or keyword",
@@ -68,6 +76,10 @@ LABELS = {
         "updated": "Updated",
     },
 }
+
+
+def csp_hash(content: bytes) -> str:
+    return "'sha256-" + base64.b64encode(hashlib.sha256(content).digest()).decode() + "'"
 
 
 def create_app(
@@ -102,10 +114,9 @@ def create_app(
         )
 
     styles = {"site": inline_css("site.css"), "reading": inline_css("reading.css")}
-    style_hashes = " ".join(
-        "'sha256-" + base64.b64encode(hashlib.sha256(css.encode()).digest()).decode() + "'"
-        for css in styles.values()
-    )
+    style_hashes = " ".join(csp_hash(css.encode()) for css in styles.values())
+    theme_boot = (ROOT / "blog/static/theme-boot.js").read_bytes()
+    theme_hash = csp_hash(theme_boot)
     app = FastAPI(docs_url=None, redoc_url=None, openapi_url=None)
     api = FastAPI(docs_url=None, redoc_url=None, openapi_url=None) if prefix else app
     app.add_middleware(GZipMiddleware, minimum_size=1000, compresslevel=5)
@@ -145,7 +156,8 @@ def create_app(
             response.headers["Strict-Transport-Security"] = "max-age=31536000"
         response.headers["Permissions-Policy"] = "camera=(), microphone=(), geolocation=()"
         response.headers["Content-Security-Policy"] = (
-            f"default-src 'self'; script-src 'self'; style-src 'self' {style_hashes}; img-src 'self' https: data:; "
+            f"default-src 'self'; script-src 'self' {theme_hash}; style-src 'self' {style_hashes}; "
+            "img-src 'self' https: data:; "
             "font-src 'self'; connect-src 'self'; object-src 'none'; base-uri 'self'; frame-ancestors 'none'; form-action 'self'"
         )
         if request.url.path.startswith(url("/static/")):
@@ -187,7 +199,7 @@ def create_app(
             card = site_cards[route]
             share_image = absolute(site_card_paths[route])
             generated_image = True
-            share_alt = f"{card.title} — {card.identity}"
+            share_alt = f"{card.title} — {card.subtitle if card.home else card.identity}"
             description = card.description
             data.update({"name": title, "url": absolute(route), "description": description, "image": share_image})
             if page_type != "home":
@@ -196,7 +208,7 @@ def create_app(
             post = extra["post"]
             generated_image = not post.image
             share_image = post.image or absolute(card_path(post, store.config))
-            if share_image.startswith("/") and not share_image.startswith("//"):
+            if share_image.startswith("/"):
                 share_image = absolute(share_image)
             data = {
                 "@context": "https://schema.org",
@@ -234,6 +246,8 @@ def create_app(
             "base_path": prefix,
             "asset_url": asset_url,
             "styles": styles,
+            "theme_boot": theme_boot.decode(),
+            "entry_id": lambda slug: f"entry:{slug}" if slug in ENTRY_ID_CONFLICTS else slug,
             "llms_url": url("/llms.txt"),
             "catalog_url": url("/.well-known/ai-catalog.json"),
             "ard_url": url("/.well-known/ard.json"),
@@ -272,15 +286,17 @@ def create_app(
     def health():
         return JSONResponse({"status": "ok"})
 
-    @api.api_route("/favicon.svg", methods=["GET", "HEAD"], include_in_schema=False)
-    def favicon():
-        return Response((source / "favicon.svg").read_bytes(), media_type="image/svg+xml")
-
     @api.api_route(
         "/{route:path}", methods=["GET", "HEAD"], response_class=HTMLResponse, include_in_schema=False
     )
     def page(request: Request, route: str):
         path = "/" + route
+        if route in ICONS:
+            icon = source / route
+            # Alternate sources that predate the raster icons can use the site's defaults.
+            if route != "favicon.svg" and not icon.is_file():
+                icon = ROOT / "src" / route
+            return FileResponse(icon, media_type=ICONS[route])
         card_route = path if path in social_cards else None
         if card_route is None and (match := re.fullmatch(r"(/social/(?:[a-z0-9-]+/)*[a-z0-9-]+)/[a-f0-9]{20}\.png", path)):
             # A crawler may have cached the previous HTML before an edit/deploy.
@@ -368,8 +384,6 @@ def create_app(
             )
         if kind == "post":
             post = value
-            posts = store.for_language(post.lang)
-            index = posts.index(post)
             data = context(
                 request,
                 post.lang,
@@ -379,8 +393,6 @@ def create_app(
                 post.alternates,
                 post.excerpt,
                 post=post,
-                previous_post=posts[index - 1] if index else None,
-                next_post=posts[index + 1] if index + 1 < len(posts) else None,
             )
             return html(request, "post.html", data)
         if kind == "tag":
@@ -391,7 +403,7 @@ def create_app(
                 if name in store.tags[code]
             }
             posts = [post for post in store.for_language(lang) if name in post.tags]
-            title = f"{LABELS[lang]['topic']}: {name}"
+            title = site_cards[path].title
             data = context(
                 request, lang, path, title, "tag", alternates, posts=posts, result_count=len(posts), tag=name
             )

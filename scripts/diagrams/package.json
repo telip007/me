@@ -1,0 +1,10 @@
+{
+  "name": "ink-pass-diagrams",
+  "private": true,
+  "engines": {
+    "node": ">=24"
+  },
+  "dependencies": {
+    "@zombie-mermaid/ascii-renderer": "5.18.0"
+  }
+}

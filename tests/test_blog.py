@@ -1,13 +1,19 @@
+import base64
+import hashlib
 import json
 import re
+from io import BytesIO
+from pathlib import Path
+from unicodedata import normalize
 from urllib.parse import urlsplit
 
 import pytest
 from fastapi.testclient import TestClient
+from PIL import Image
 
 from blog.content import ContentError, load_content
 from blog.export import export_site
-from blog.main import create_app
+from blog.main import ROOT, create_app
 
 
 def social_image(page):
@@ -75,6 +81,67 @@ def test_share_cards_preserve_custom_images_and_exclude_private_posts(source, tm
     assert not (output / "social/german").exists()
 
 
+@pytest.mark.parametrize(("image", "expected"), [
+    ("media/cover.png", "https://example.test/me/media/cover.png"),
+    ("/media/cover.png", "https://example.test/me/media/cover.png"),
+    ("//cdn.example.test/cover.png", "https://cdn.example.test/cover.png"),
+    ("https://cdn.example.test/cover.png", "https://cdn.example.test/cover.png"),
+    (
+        "https://cdn.example.test:8443/cover%20image.png?variant=%2F",
+        "https://cdn.example.test:8443/cover%20image.png?variant=%2F",
+    ),
+    ("//bücher.example/cover.png", "https://bücher.example/cover.png"),
+    ("https://[2001:db8::1]:8443/cover.png", "https://[2001:db8::1]:8443/cover.png"),
+    ("https://192.0.2.1/cover.png", "https://192.0.2.1/cover.png"),
+    ("media/cover%2Epng?variant=%2e", "https://example.test/me/media/cover%2Epng?variant=%2e"),
+])
+def test_custom_cover_metadata_uses_absolute_urls_in_runtime_and_export(source, tmp_path, image, expected):
+    post(source, meta=f"slug: models\nimage: {image}")
+    config = json.loads((source / "config.json").read_text())
+    config["basePath"] = "/me"
+    (source / "config.json").write_text(json.dumps(config))
+    runtime = TestClient(create_app(source_dir=source)).get("/me/articles/models/")
+    output = export_site(source_dir=source, output_dir=tmp_path / "dist")
+    for page in (runtime.text, (output / "articles/models/index.html").read_text()):
+        assert social_image(page) == expected
+        assert f'name="twitter:image" content="{expected}"' in page
+        assert json.loads(re.search(r'application/ld\+json">(.*?)</script>', page, re.DOTALL)[1])["image"] == expected
+
+
+@pytest.mark.parametrize("image", [
+    "http://cdn.example.test/cover.png",
+    "https:/cover.png",
+    "///cover.png",
+    "https://cdn.example.test:notaport/og.png",
+    "//cdn.example.test:65536/og.png",
+    "https://cdn.example.test%2Fog.png",
+    "//cdn%2Eexample.test/og.png",
+    "https://cdn.example.test|invalid/og.png",
+    "https://user@cdn.example.test/og.png",
+    "https://cdn.example.test:/og.png",
+    "https://cdn.example.123/og.png",
+    "https://xn--invalid-.example/og.png",
+    "https://[2001:db8::1]extra:8443/og.png",
+    "https://[fe80::1%25en0]/og.png",
+    "/media/%2e%2e/%2e%2e/cover.png",
+    "media/%2E./cover.png",
+    "media/%2e/cover.png",
+])
+@pytest.mark.parametrize("entry_point", ["runtime", "export"])
+def test_runtime_and_export_reject_unsupported_cover_urls(source, tmp_path, image, entry_point):
+    post(source, meta=f"image: {image}")
+    config = json.loads((source / "config.json").read_text())
+    config["basePath"] = "/deployment/blog"
+    (source / "config.json").write_text(json.dumps(config))
+    output = tmp_path / "dist"
+    with pytest.raises(ContentError, match="image"):
+        if entry_point == "runtime":
+            create_app(source_dir=source)
+        else:
+            export_site(source_dir=source, output_dir=output)
+    assert not output.exists()
+
+
 def test_static_export_includes_generated_share_images(source, tmp_path):
     post(source, meta="slug: models")
     config = json.loads((source / "config.json").read_text())
@@ -118,6 +185,16 @@ def test_every_public_page_has_its_own_share_card(source):
     assert social_image(client.get("/me/?q=private+search").text) in images
     assert 'property="og:image"' not in client.get("/me/missing/").text
     assert client.get("/me/en/about/", follow_redirects=False).headers["location"] == "/me/about/"
+
+
+def test_writing_topic_card_uses_the_topic_page_title(source):
+    post(source, meta="tags: [Writing]")
+    client = TestClient(create_app(source_dir=source))
+    writing = client.get("/articles/").text
+    topic = client.get("/tags/writing/").text
+    assert 'property="og:image:alt" content="Topic: Writing — Example"' in topic
+    assert 'name="twitter:image:alt" content="Topic: Writing — Example"' in topic
+    assert client.get(urlsplit(social_image(writing)).path).content != client.get(urlsplit(social_image(topic)).path).content
 
 
 def test_page_share_cards_refresh_and_do_not_outlive_removed_topics(source):
@@ -182,6 +259,14 @@ def post(source, name="english", meta="", body="A useful article."):
     )
     path.write_text(f"---\n{header}\n{meta}\n---\n{body}")
     return path
+
+
+def test_article_toc_fragments_identify_only_their_markdown_headings(source):
+    post(source, meta="slug: anchors", body="## Theme\n\n## Article title\n\n## Top\n\n## Content\n")
+    page = TestClient(create_app(source_dir=source)).get("/articles/anchors/").text
+    for fragment in ("theme", "article-title", "top", "content"):
+        assert f'href="#{fragment}"' in page
+        assert re.findall(rf'<([\w-]+)[^>]*\sid="{fragment}"', page) == ["h2"]
 
 
 def test_content_routes_and_safe_markdown(source):
@@ -262,10 +347,14 @@ def test_routes_filter_fragments_and_base_path(source):
     assert home.status_code == 200
     assert '<html lang="en"' in home.text
     assert 'href="/me/about/"' in home.text
+    assert '<form' not in home.text
+    assert 'id="models"' in home.text
     assert "language-switch" not in home.text
     english = client.get("/me/articles/models/")
     assert 'rel="canonical" href="https://example.test/me/articles/models/"' in english.text
     assert "hreflang=" not in english.text
+    assert 'href="/me/#models"' in english.text
+    assert 'class="reading-progress"' in english.text
     fragment = client.get("/me/?q=missing", headers={"HX-Request": "true"})
     assert fragment.status_code == 200
     assert "<html" not in fragment.text
@@ -331,6 +420,7 @@ def test_export_uses_app_and_preserves_previous_output_on_invalid_content(source
     assert 'data-static-export="true"' in before
     assert "hx-get=" not in before
     assert "/static/htmx.min.js" not in before
+    assert '<form' not in (dist / "articles/index.html").read_text()
     assert (dist / "static/site.css").is_file()
     post(source, "bad", "slug: ../../bad")
     with pytest.raises(ContentError):
@@ -488,9 +578,6 @@ def test_german_content_never_leaks_into_any_public_surface(source, tmp_path):
 
 
 def test_inline_styles_are_csp_authorized_and_fonts_discovered_early(source):
-    import base64
-    import hashlib
-
     post(source, meta="slug: readable")
     client = TestClient(create_app(source_dir=source, base_path="/me"))
     for route in ["/", "/articles/", "/articles/readable/", "/about/", "/missing/"]:
@@ -502,19 +589,20 @@ def test_inline_styles_are_csp_authorized_and_fonts_discovered_early(source):
             digest = base64.b64encode(hashlib.sha256(style.encode()).digest()).decode()
             assert f"'sha256-{digest}'" in response.headers["content-security-policy"]
         assert "unsafe-inline" not in response.headers["content-security-policy"]
+        script_src = re.search(r"script-src ([^;]+);", response.headers["content-security-policy"])[1]
+        bootstrap, = re.findall(r'<script>(.*?)</script>', response.text, re.DOTALL)
+        assert bootstrap.encode() == (ROOT / "blog/static/theme-boot.js").read_bytes()
+        digest = base64.b64encode(hashlib.sha256(bootstrap.encode()).digest()).decode()
+        assert script_src == f"'self' 'sha256-{digest}'"
         for font_url in re.findall(r"url\('([^']+)'\)", "".join(styles)):
             assert font_url.startswith("/me/static/fonts/")
             assert client.get(font_url).status_code == 200
         preloads = re.findall(r'<link rel="preload"[^>]*>', response.text)
-        assert len(preloads) == (2 if route in ["/articles/readable/", "/about/"] else 1)
+        assert len(preloads) == 3
         assert all(client.get(re.search(r'href="([^"]+)"', link)[1]).status_code == 200 for link in preloads)
 
 
 def test_security_headers_and_static_cache_fingerprints(source):
-    import hashlib
-
-    from blog.main import ROOT
-
     app = create_app(source_dir=source)
     http = TestClient(app)
     https = TestClient(app, base_url="https://example.test")
@@ -538,7 +626,7 @@ def test_security_headers_and_static_cache_fingerprints(source):
 def test_htmx_history_and_timeout_are_explicit(source):
     post(source)
     client = TestClient(create_app(source_dir=source))
-    for route in ["/", "/articles/"]:
+    for route in ["/articles/"]:
         page = client.get(route).text
         config = json.loads(re.search(r'name="htmx-config" content=\'(.*?)\'', page)[1])
         assert config["historyRestoreAsHxRequest"] is False
@@ -603,3 +691,80 @@ def test_share_card_urls_change_when_pillow_renderer_changes(source, monkeypatch
             assert social.card_path(store.posts[0], store.config) != before
     finally:
         importlib.reload(social)
+
+
+@pytest.mark.parametrize("face", ["InriaSerif-Regular.ttf", "InriaSerif-Bold.ttf"])
+def test_share_card_urls_depend_on_both_font_files(face, monkeypatch):
+    import importlib
+
+    from blog import social
+
+    original_version = social.STYLE_VERSION
+    read_bytes = Path.read_bytes
+
+    def changed_font(path):
+        data = read_bytes(path)
+        return data + b"changed" if path.name == face else data
+
+    try:
+        with monkeypatch.context() as patch:
+            patch.setattr(Path, "read_bytes", changed_font)
+            importlib.reload(social)
+            assert social.STYLE_VERSION != original_version
+    finally:
+        importlib.reload(social)
+
+
+def test_share_title_wraps_a_long_identifier_and_composed_accents():
+    from blog.social import MEASURE, fit_title
+
+    title = "Go\u0308ksu " + "SoftwareDevelopmentResponsibilityBoundary" * 4
+    font, lines, line_height = fit_title(title)
+    assert len(lines) > 1
+    assert "".join(lines).replace(" ", "") == normalize("NFC", title).replace(" ", "")
+    assert all(font.getlength(line) <= MEASURE for line in lines)
+    assert len(lines) * line_height <= 300
+
+
+def test_favicon_family_and_export_under_base_path(source, tmp_path):
+    config_file = source / "config.json"
+    config = json.loads(config_file.read_text())
+    config["basePath"] = "/me"
+    config_file.write_text(json.dumps(config))
+    client = TestClient(create_app(source_dir=source))
+    page = client.get("/me/").text
+    output = export_site(source, tmp_path / "dist")
+    assert 'href="/me/apple-touch-icon.png"' in (output / "index.html").read_text()
+    for name, mime in (
+        ("favicon.svg", "image/svg+xml"),
+        ("favicon.ico", "image/vnd.microsoft.icon"),
+        ("apple-touch-icon.png", "image/png"),
+    ):
+        assert f'href="/me/{name}"' in page
+        response = client.get(f"/me/{name}")
+        assert response.status_code == 200
+        assert response.headers["content-type"] == mime
+        assert (output / name).read_bytes() == response.content
+        if name == "apple-touch-icon.png":
+            assert Image.open(BytesIO(response.content)).size == (180, 180)
+        if name == "favicon.ico":
+            assert Image.open(BytesIO(response.content)).ico.sizes() == {(16, 16), (32, 32), (48, 48)}
+
+
+def test_terminal_diagrams_are_scoped_validated_and_escaped(source):
+    diagrams = source / "diagrams" / "models"
+    diagrams.mkdir(parents=True)
+    (diagrams / "manifest.json").write_text(json.dumps({
+        "flow": {"title": "Flow & scope", "caption": "<caption>", "transcript": "<script>"},
+    }))
+    (diagrams / "flow.txt").write_text("┌───┐\n│<&>│\n└───┘\n")
+    post(source, meta="slug: models", body="```terminal-diagram flow\n```\n\n```text\nordinary\n```\n")
+    rendered = str(load_content(source).posts[0].html)
+    assert 'class="diagram-scroll"' in rendered and 'tabindex="0"' in rendered
+    assert 'aria-labelledby="diagram:flow:1"' in rendered
+    assert "Flow &amp; scope" in rendered and "&lt;caption&gt;" in rendered
+    assert "&lt;script&gt;" in rendered and "│&lt;&amp;&gt;│" in rendered
+    assert '<code class="language-text">ordinary' in rendered
+    post(source, name="other", meta="slug: other", body="```terminal-diagram flow\n```\n")
+    with pytest.raises(ContentError, match="Unknown terminal diagram.*flow"):
+        load_content(source)

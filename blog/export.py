@@ -10,7 +10,7 @@ from pathlib import Path
 
 from fastapi.testclient import TestClient
 
-from blog.main import ROOT, create_app
+from blog.main import ICONS, ROOT, create_app
 
 
 def export_site(
@@ -65,7 +65,7 @@ def export_site(
             if response.status_code != 404:
                 raise RuntimeError("Expected a rendered 404 page")
             (staging / "404.html").write_text(response.text)
-            for route in app.state.social_cards:
+            for route in (*app.state.social_cards, *(f"/{name}" for name in ICONS)):
                 response = client.get(prefix + route)
                 response.raise_for_status()
                 destination = staging / route.lstrip("/")
@@ -73,7 +73,6 @@ def export_site(
                 destination.write_bytes(response.content)
         if app.state.static_dir.is_dir():
             shutil.copytree(app.state.static_dir, staging / "static")
-        shutil.copyfile(source / "favicon.svg", staging / "favicon.svg")
         # All validation and rendering finishes before the previous output is moved.
         backup = output.with_name(output.name + ".previous")
         if backup.exists():

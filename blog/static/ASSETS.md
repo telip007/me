@@ -1,13 +1,11 @@
 # Local browser assets
 
-No asset is loaded from a third-party origin at runtime.
+All browser assets are served by the site.
 
-- `htmx.min.js`: HTMX **2.0.11**, vendored from https://github.com/bigskysoftware/htmx/tree/v2.0.11/dist . Zero-clause BSD license in htmx-LICENSE.txt. The maintained 2.x release is deliberately pinned; the project does not require 4.x APIs. Upgrade by reviewing release notes and rerunning fragment/history/browser tests.
-- `fonts/BricolageGrotesque.woff2`: Bricolage Grotesque variable font, SIL OFL 1.1. Original https://github.com/google/fonts/tree/main/ofl/bricolagegrotesque . Converted from BricolageGrotesque[opsz,wdth,wght].ttf and subset to U+0000–024F, U+2000–206F and U+20AC with FontTools, with the unused width axis fixed at its default 100; weight and optical-size axes remain variable. Includes German and English characters. License in fonts/BricolageGrotesque-OFL.txt. The user selected this expressive type voice in direction A.
-- `fonts/SourceSerif4-Regular.woff2` and `SourceSerif4-Semibold.woff2`: Adobe Source Serif 4, SIL OFL 1.1. Original https://github.com/adobe-fonts/source-serif/tree/release/WOFF2/TTF . License in fonts/SourceSerif4-OFL.md.
-- `site.css`, `reading.css`, `site.js`, and geometric identity mark: original project implementation.
-- `fonts/BricolageGrotesque-Social.ttf`: derived from the same licensed local WOFF2 using FontTools, with weight 650 and optical size 48 fixed. Used by Pillow for automatic share cards; no external font request or browser process is needed. The existing Bricolage OFL license applies.
+- `htmx.min.js`: HTMX 2.0.11 from [the release distribution](https://github.com/bigskysoftware/htmx/tree/v2.0.11/dist). Zero-clause BSD license in `htmx-LICENSE.txt`.
+- `fonts/InriaSerif-{Regular,Bold,Italic}.woff2`: local Inria Serif faces from the approved editorial design. The regular and bold TTFs used by Pillow come from [Black Foundry’s Inria Serif sources](https://github.com/BlackFoundryCom/InriaFonts/tree/95a529cee87d8be884632644d3d37ad28512be28/fonts/InriaSerif/TTF). SIL OFL 1.1 in `fonts/InriaSerif-OFL.txt`.
+- `fonts/MonaspaceNeon-Regular.woff2`: Monaspace Neon Regular from the approved editorial design. SIL OFL 1.1 in `fonts/MonaspaceNeon-OFL.txt`.
+- The prior Bricolage Grotesque and Source Serif 4 files retain their bundled OFL licenses and their original paths for previously cached pages.
+- The three root icons in `src/` share a small-scale drawing derived from the footer seal. The footer seal and its animation are local.
 
-Retrieved 2026-10-29. Fonts use `font-display: swap`. The primary display font is preloaded; prose pages also preload the regular reading font. The small first-party stylesheets are embedded by the renderer, with font URLs rewritten to content-fingerprinted absolute local paths and exact CSP style hashes. Decorative page transitions are progressive enhancement and disabled for reduced motion.
-
-Bricolage source TTF SHA-256: `413e7357809ddd12fd80a96a8a396de0e401638d4acd3cb3e37532f0472ac682`; production WOFF2 SHA-256: `89c140b3bc41dfbf3156834945ad3eb817d1ec0090ce71674c941253e532569b`. Source retrieved again to retain typographic punctuation.
+The site preloads Inria Serif Regular and Bold and Monaspace Neon Regular. Browser fonts use `font-display: optional`. The renderer fingerprints local font URLs and authorizes the embedded styles and theme bootstrap with exact CSP hashes.

@@ -8,6 +8,7 @@ from functools import lru_cache
 from io import BytesIO
 from pathlib import Path
 from typing import NamedTuple
+from unicodedata import normalize
 from urllib.parse import urlsplit
 
 import PIL
@@ -16,11 +17,15 @@ from PIL import Image, ImageDraw, ImageFont
 from blog.content import ContentStore, Post
 
 WIDTH, HEIGHT = 1200, 630
-FONT = Path(__file__).parent / "static/fonts/BricolageGrotesque-Social.ttf"
-WINE, PAPER, CITRON, MUTED = "#281e2a", "#eee9dc", "#e1ec93", "#655868"
-# Invalidate cached URLs whenever renderer code, Pillow or the font changes.
+FONTS = Path(__file__).parent / "static/fonts"
+REGULAR = FONTS / "InriaSerif-Regular.ttf"
+BOLD = FONTS / "InriaSerif-Bold.ttf"
+PAPER, INK, MUTED, RULE = "#ffffff", "#202020", "#595959", "#c9c9c9"
+MARGIN = 88
+MEASURE = WIDTH - 2 * MARGIN
+# Invalidate cached URLs whenever renderer code, Pillow or either font changes.
 STYLE_VERSION = hashlib.sha256(
-    Path(__file__).read_bytes() + FONT.read_bytes() + PIL.__version__.encode()
+    Path(__file__).read_bytes() + REGULAR.read_bytes() + BOLD.read_bytes() + PIL.__version__.encode()
 ).hexdigest()
 
 
@@ -30,6 +35,7 @@ class PageCard(NamedTuple):
     identity: str
     host: str
     home: bool = False
+    subtitle: str = ""
 
 
 def page_cards(store: ContentStore) -> dict[str, PageCard]:
@@ -41,13 +47,15 @@ def page_cards(store: ContentStore) -> dict[str, PageCard]:
     cards = {}
     for route, (kind, value) in store.routes.items():
         if kind == "home":
-            title, detail = config.get("siteSubtitle") or identity, description
+            cards[route] = PageCard(identity, description, identity, host, True, config.get("siteSubtitle", ""))
+            continue
         elif kind == "articles":
             title, detail = "Writing", description
         elif kind == "tags":
             title, detail = "Topics", "Explore the writing by topic. " + description
         elif kind == "tag":
-            title, detail = value[1], f"Writing about {value[1]} by {identity}."
+            _, topic = value
+            title, detail = f"Topic: {topic}", f"Writing about {topic} by {identity}."
         elif kind == "page":
             title = value.title
             detail = value.description or (
@@ -56,7 +64,7 @@ def page_cards(store: ContentStore) -> dict[str, PageCard]:
             )
         else:
             continue
-        cards[route] = PageCard(title, detail, identity, host, kind == "home")
+        cards[route] = PageCard(title, detail, identity, host)
     return cards
 
 
@@ -89,7 +97,7 @@ def card_path(post: Post, config: dict) -> str:
 def wrap_text(text: str, font: ImageFont.FreeTypeFont, width: int) -> list[str]:
     """Measure actual glyphs, splitting even an unbroken technical identifier."""
     lines, current = [], ""
-    for word in text.split():
+    for word in normalize("NFC", text).split():
         candidate = f"{current} {word}" if current else word
         if font.getlength(candidate) <= width:
             current = candidate
@@ -108,10 +116,10 @@ def wrap_text(text: str, font: ImageFont.FreeTypeFont, width: int) -> list[str]:
 
 
 def fit_title(
-    text: str, width: int = 1008, height: int = 276, max_size: int = 84,
+    text: str, width: int = MEASURE, height: int = 300, max_size: int = 108,
 ) -> tuple[ImageFont.FreeTypeFont, list[str], int]:
     for size in range(max_size, 39, -2):
-        font = ImageFont.truetype(str(FONT), size)
+        font = ImageFont.truetype(BOLD, size)
         lines = wrap_text(text, font, width)
         line_height = round(size * 1.12)
         if len(lines) * line_height <= height:
@@ -126,7 +134,7 @@ def fit_title(
 
 
 def shorten(text: str, font: ImageFont.FreeTypeFont, width: int) -> str:
-    text = " ".join(text.split())
+    text = " ".join(normalize("NFC", text).split())
     if font.getlength(text) <= width:
         return text
     while text and font.getlength(text + "…") > width:
@@ -137,73 +145,42 @@ def shorten(text: str, font: ImageFont.FreeTypeFont, width: int) -> str:
 @lru_cache(maxsize=32)
 def render_card(content: tuple[str, ...] | PageCard) -> bytes:
     if isinstance(content, PageCard):
-        return render_page_card(content)
-    title, topic, date, identity, host, _excerpt = content
-    image = Image.new("RGB", (WIDTH, HEIGHT), WINE)
-    draw = ImageDraw.Draw(image)
-    small = ImageFont.truetype(str(FONT), 24)
-    masthead = ImageFont.truetype(str(FONT), 34)
-    draw.text((64, 52), shorten(identity, masthead, 870), font=masthead, fill=PAPER, anchor="lt")
-    for offset, color in [(0, "#6e536f"), (14, "#ac8dad"), (28, CITRON)]:
-        draw.rounded_rectangle((1030 + offset, 41 + offset, 1100 + offset, 89 + offset),
-                               radius=9, outline=color, width=2)
-    draw.rounded_rectangle((72, 160, 1160, 574), radius=36, fill=CITRON)
-    draw.rounded_rectangle((56, 144, 1144, 558), radius=36, fill=PAPER)
-    # Only the leading corner is rounded, matching the site's reading plane.
-    draw.rectangle((100, 144, 1144, 558), fill=PAPER)
-    draw.rectangle((56, 188, 1144, 558), fill=PAPER)
-    draw.text((96, 181), shorten(topic, small, 740), font=small, fill=MUTED, anchor="lt")
-    draw.text((1104, 181), date, font=small, fill=MUTED, anchor="rt")
-    font, lines, line_height = fit_title(title)
-    top = 247 + (276 - len(lines) * line_height) // 2
-    for index, line in enumerate(lines):
-        draw.text((96, top + index * line_height), line, font=font, fill=WINE, anchor="lt")
-    draw.text((64, 594), shorten(host, small, 1008), font=small, fill=PAPER, anchor="lt")
-    output = BytesIO()
-    image.save(output, format="PNG", optimize=True)
-    return output.getvalue()
-
-
-def render_page_card(content: PageCard) -> bytes:
-    image = Image.new("RGB", (WIDTH, HEIGHT), WINE)
-    draw = ImageDraw.Draw(image)
-    masthead = ImageFont.truetype(str(FONT), 36)
-    small = ImageFont.truetype(str(FONT), 26)
-    draw.text((64, 54), shorten(content.identity, masthead, 880), font=masthead, fill=PAPER, anchor="lt")
-    if content.home:
-        # The homepage echoes the site's opening, with its larger layer signature.
-        for offset, color in [(0, "#6e536f"), (24, "#ac8dad"), (48, CITRON)]:
-            draw.rounded_rectangle((900 + offset, 184 + offset, 1070 + offset, 306 + offset),
-                                   radius=22, outline=color, width=3)
-        font, lines, line_height = fit_title(content.title, width=780, height=260, max_size=104)
-        top = 158 + (260 - len(lines) * line_height) // 2
-        for index, line in enumerate(lines):
-            draw.text((64, top + index * line_height), line, font=font, fill=PAPER, anchor="lt")
-        draw.rounded_rectangle((76, 462, 1152, 576), radius=26, fill=CITRON)
-        draw.rounded_rectangle((56, 446, 1132, 560), radius=26, fill=PAPER)
-        draw.rectangle((90, 446, 1132, 560), fill=PAPER)
-        draw.rectangle((56, 480, 1132, 560), fill=PAPER)
-        detail_top, detail_width, detail_size = 470, 960, 30
+        title, identity, host = content.title, content.identity, content.host
+        subtitle, date, topic = content.subtitle, "", ""
+        home = content.home
     else:
-        for offset, color in [(0, "#6e536f"), (14, "#ac8dad"), (28, CITRON)]:
-            draw.rounded_rectangle((1030 + offset, 41 + offset, 1100 + offset, 89 + offset),
-                                   radius=9, outline=color, width=2)
-        draw.rounded_rectangle((72, 160, 1160, 574), radius=36, fill=CITRON)
-        draw.rounded_rectangle((56, 144, 1144, 558), radius=36, fill=PAPER)
-        draw.rectangle((100, 144, 1144, 558), fill=PAPER)
-        draw.rectangle((56, 188, 1144, 558), fill=PAPER)
-        font, lines, line_height = fit_title(content.title, height=206, max_size=92)
-        top = 188 + (206 - len(lines) * line_height) // 2
-        for index, line in enumerate(lines):
-            draw.text((96, top + index * line_height), line, font=font, fill=WINE, anchor="lt")
-        detail_top, detail_width, detail_size = 427, 1008, 30
-    detail_font = ImageFont.truetype(str(FONT), detail_size)
-    lines = wrap_text(content.description, detail_font, detail_width)
-    for index, line in enumerate(lines[:2]):
-        if index == 1 and len(lines) > 2:
-            line = shorten(" ".join(lines[1:]), detail_font, detail_width)
-        draw.text((96, detail_top + index * 38), line, font=detail_font, fill=MUTED, anchor="lt")
-    draw.text((64, 594), shorten(content.host, small, 1008), font=small, fill=PAPER, anchor="lt")
+        title, topic, date, identity, host, _excerpt = content
+        subtitle, home = "", False
+
+    image = Image.new("RGB", (WIDTH, HEIGHT), PAPER)
+    draw = ImageDraw.Draw(image)
+    small = ImageFont.truetype(REGULAR, 32)
+    draw.text((MARGIN, 55), shorten(host if home else identity, small, MEASURE),
+              font=small, fill=MUTED, anchor="lt")
+    for y in (108, 522):
+        draw.line((MARGIN, y, WIDTH - MARGIN, y), fill=RULE, width=2)
+
+    font, lines, line_height = fit_title(title, height=244 if subtitle else 326, max_size=132 if home else 108)
+    subtitle_font = ImageFont.truetype(REGULAR, 44)
+    subtitle_lines = wrap_text(subtitle, subtitle_font, MEASURE)
+    if len(subtitle_lines) > 2:
+        subtitle_lines = [subtitle_lines[0], shorten(" ".join(subtitle_lines[1:]), subtitle_font, MEASURE)]
+    title_height = len(lines) * line_height
+    subtitle_height = len(subtitle_lines) * 51 + 12 if subtitle_lines else 0
+    top = 304 - (title_height + subtitle_height) // 2
+    for index, line in enumerate(lines):
+        draw.text((MARGIN, top + index * line_height), line, font=font, fill=INK, anchor="lt")
+    for index, line in enumerate(subtitle_lines):
+        draw.text((MARGIN, top + title_height + 12 + index * 51), line,
+                  font=subtitle_font, fill=MUTED, anchor="lt")
+
+    if date:
+        detail = f"{date}  ·  {topic}" if topic else date
+        draw.text((MARGIN, 552), shorten(detail, small, MEASURE * 3 // 4), font=small, fill=MUTED, anchor="lt")
+    if not home:
+        draw.text((WIDTH - MARGIN, 552), shorten(host, small, MEASURE // 5),
+                  font=small, fill=MUTED, anchor="rt")
+
     output = BytesIO()
     image.save(output, format="PNG", optimize=True)
     return output.getvalue()

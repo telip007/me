@@ -1,0 +1,8 @@
+flowchart TB
+  %% Making dependencies explicit
+  %% Either implementation branch can contain a loop.
+  contract["Agree on<br/>API contract"] --> handler["Request<br/>handler"]
+  contract --> screen["Screen<br/>behavior"]
+  handler --> integration["Integration<br/>check"]
+  screen --> integration
+  integration --> inspect["Inspect<br/>result"]

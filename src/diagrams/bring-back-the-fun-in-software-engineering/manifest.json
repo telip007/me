@@ -1,0 +1,12 @@
+{
+  "repair-loop": {
+    "title": "A loop around feature work",
+    "caption": "A loop around an ordinary development task. You can run it interactively or automate selected steps.",
+    "transcript": "Define observable behavior. The agent reads, edits, and uses tools to attempt a change, then the behavior is checked. On pass, inspect and record the result, then continue or finish. If the check fails and retries remain, feed the observed result back to the agent for another attempt. A failure at the limit stops the loop for investigation."
+  },
+  "task-graph": {
+    "title": "Making dependencies explicit",
+    "caption": "The arrows express dependencies. A task can use ordinary code, an agent, or a complete loop.",
+    "transcript": "Agree on the API contract, then develop the request handler and screen behavior independently. Either branch can contain an agent loop. The integration check requires both implementations. Inspect the integrated result afterward."
+  }
+}

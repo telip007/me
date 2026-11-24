@@ -37,7 +37,7 @@
     table.before(wrapper);
     wrapper.append(table);
   }
-  for (const element of document.querySelectorAll('.prose pre, .table-scroll')) {
+  for (const element of document.querySelectorAll('.prose pre:not(.diagram-scroll pre), .table-scroll')) {
     const update = () => {
       if (element.scrollWidth > element.clientWidth + 1) {
         element.tabIndex = 0;

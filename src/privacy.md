@@ -5,7 +5,7 @@ description: "How goeksu.me handles visitor data."
 
 # Privacy policy
 
-Last updated: 31 October 2026.
+Last updated: 24 November 2026.
 
 ## Who is responsible
 
@@ -21,9 +21,11 @@ The application has no visitor database and routine HTTP access logging is disab
 
 Fly.io is certified under the EU–US Data Privacy Framework. Its infrastructure, operations and subprocessors can involve processing outside the EU. See its [data protection information](https://fly.io/legal/security-questionnaire/#compliance-privacy-data-protection-and-contracting), [privacy statement](https://fly.io/legal/privacy-policy/) and [subprocessor list](https://fly.io/legal/sub-processors/) for details.
 
-## Cookies, tracking and local assets
+## Cookies, tracking and browser storage
 
 This website does not set cookies, use analytics or advertising trackers, or store visitor profiles. Fonts, styles and scripts are served from this website rather than loaded from third-party font or script services. No account or registration is required.
+
+If you choose a light or dark appearance, the site saves that choice in your browser’s local storage so it can be applied on your next visit. The choice stays in your browser and is never sent to the server.
 
 ## Search and RSS
 

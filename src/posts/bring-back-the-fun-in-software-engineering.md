@@ -76,9 +76,8 @@ Huntley's [“everything is a ralph loop”](https://ghuntley.com/loop/) describ
 
 Return to the search feature. A concrete task might be to keep a slow response from replacing newer results. You reproduce the failure by controlling the order in which two requests finish, let the agent attempt a fix, and run the check again. If it passes, you inspect the behavior and the change. If it fails, the observed result becomes feedback for another attempt, within a fixed retry limit.
 
-![A feature-work loop: define one observable behavior, let the agent attempt a change, and check the result. A pass leads to inspecting the change and recording progress. A failure provides feedback for a bounded retry or stops for investigation.](/static/images/posts/bring-back-the-fun-in-software-engineering/repair-loop.png)
-
-*A loop around an ordinary development task. You can run it interactively or automate selected steps.*
+```terminal-diagram repair-loop
+```
 
 Even this small example contains a real puzzle: a check that passes when the result list stays empty would miss the point. You need evidence that the latest results appear and stale results cannot replace them. Deciding what to observe is part of solving the feature, and the agent's claim that it fixed the race isn't that evidence.
 
@@ -94,9 +93,8 @@ Now suppose the work contains several tasks with different dependencies. Some ca
 
 Suppose the search feature needs a new endpoint and a change to the screen. Once you've agreed on the request and response contract, the handler and its consumer can be developed separately. An integration check needs both implementations. A final inspection needs the integrated result.
 
-![A dependency graph for a search feature: agree on the API contract, develop the request handler and screen behavior independently, join them for an integration check, then inspect the result. Either implementation task can contain an agent loop.](/static/images/posts/bring-back-the-fun-in-software-engineering/task-graph.png)
-
-*The arrows express dependencies. A task can use ordinary code, an agent, or a complete loop.*
+```terminal-diagram task-graph
+```
 
 The graph gives you somewhere to express those relationships. It also forces decisions about ownership and state. Which worker owns the shared types? What happens if the response format changes while another task is using the earlier version? Can a failed task be retried without overwriting someone else's work?
 

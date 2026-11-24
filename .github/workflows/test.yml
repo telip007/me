@@ -16,8 +16,10 @@ jobs:
           python-version: "3.12"
       - uses: actions/setup-node@v4
         with:
-          node-version: 22
+          node-version: 24
       - run: uv sync --locked
       - run: uv run --locked ruff check blog tests scripts/export.py scripts/check_content.py
+      - run: npm ci --prefix scripts/diagrams --ignore-scripts
+      - run: node scripts/diagrams/render.mjs src/diagrams/bring-back-the-fun-in-software-engineering --check
       - run: npm test
       - run: npm run build

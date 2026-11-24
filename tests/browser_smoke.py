@@ -33,7 +33,7 @@ async def run(args):
         report["responsive"] = (
             "320, 390, 768 and 1440px: English index, topics and articles have no page overflow"
         )
-        await page.goto(args.fixture + "/")
+        await page.goto(args.fixture + "/articles/")
         await page.evaluate("window.__documentMarker = 'preserved'")
         await page.locator("#article-search").fill("verifiable")
         await page.wait_for_function("() => document.querySelector('#posts').dataset.resultCount === '1'")
@@ -46,11 +46,11 @@ async def run(args):
         await page.go_back()
         assert await page.locator("#article-search").input_value() == "verifiable"
         report["htmx"] = "fragment update, focus, live count, reload and native back navigation passed"
-        await page.route("**/?q=broken-query*", lambda route: route.abort())
+        await page.route("**/articles/?q=broken-query*", lambda route: route.abort())
         await page.locator("#article-search").fill("broken-query")
         await page.locator("#search-error").wait_for(state="visible")
         assert await page.locator("#posts").get_attribute("data-result-count") == "1"
-        await page.unroute("**/?q=broken-query*")
+        await page.unroute("**/articles/?q=broken-query*")
         await page.locator("#article-search").fill("not-a-match")
         await page.wait_for_function("() => document.querySelector('#posts').dataset.resultCount === '0'")
         assert await page.locator("#search-error").is_hidden()
@@ -89,16 +89,16 @@ async def run(args):
         await page.keyboard.press("Tab")
         assert await page.evaluate("document.activeElement.className") == "skip-link"
         await page.keyboard.press("Enter")
-        assert await page.evaluate("document.activeElement.id") == "content"
+        assert await page.evaluate("document.activeElement.localName") == "main"
         report["keyboard"] = "skip link moves focus to content; public professional link preserved"
         nojs_context = await browser.new_context(
             java_script_enabled=False, viewport={"width": 390, "height": 844}
         )
         nojs = await nojs_context.new_page()
-        await nojs.goto(args.fixture + "/")
+        await nojs.goto(args.fixture + "/articles/")
         await nojs.locator("#article-search").fill("verifiable")
         await nojs.get_by_role("button", name="Search", exact=True).click()
-        await nojs.wait_for_url("**/?q=*")
+        await nojs.wait_for_url("**/articles/?q=*")
         assert await nojs.locator("#posts").get_attribute("data-result-count") == "1"
         assert await nojs.evaluate("typeof htmx") == "undefined"
         report["noJavaScript"] = "ordinary GET search returns correct result with browser JavaScript disabled"

@@ -33,7 +33,11 @@ test('builds canonical English routes and redirects legacy counterparts', async 
   assert.match(english, /href="\/me\/rss.xml"/);
   assert.match(english, /rel="canonical" href="https:\/\/example.test\/me\/articles\/models\/"/);
   assert.match(english, /"inLanguage": "en"/);
-  assert.match(english, /min read/);
+  assert.match(english, /<time datetime="2026-01-01">01 Jan 2026<\/time>/);
+  assert.match(english, /href="\/me\/#models"/);
+  assert.match(english, /href="\/me\/favicon\.ico"/);
+  assert.match(english, /href="\/me\/apple-touch-icon\.png"/);
+  assert.doesNotMatch(await read('articles/index.html'), /<form|\/static\/htmx\.min\.js/);
   assert.doesNotMatch(english, /hreflang|language-switch|GERMAN_PRIVATE_MARKER/);
   assert.match(await read('tags/llm/index.html'), /Topic: LLM/);
   assert.match(await read('rss.xml'), /<language>en<\/language>/);
