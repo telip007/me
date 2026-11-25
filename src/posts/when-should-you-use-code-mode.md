@@ -29,25 +29,31 @@ With Code Mode the agent can create code that does all the retrieval and aggrega
 The program might look like this. The tool names are illustrative, and the example counts matching log lines that start with `FAIL `.
 
 ```javascript
-const jobs = await tools.listFailedJobs({ runId: 42 });
-const results = await Promise.allSettled(
-  jobs.map(async job => {
-    const log = await tools.getJobLog({ id: job.id });
-    return log.match(/^FAIL .+$/gm) ?? [];
-  })
-);
+const jobs = await tools.listFailedJobs({
+  runId: 42,
+});
+
+const logReads = jobs.map(async ({ id }) => {
+  const log = await tools.getJobLog({ id });
+  return log.match(/^FAIL .+$/gm) ?? [];
+});
+
+const results = await Promise.allSettled(logReads);
 
 const counts = {};
 const errors = [];
-for (const [i, result] of results.entries()) {
+
+for (const [index, result] of results.entries()) {
   if (result.status === "rejected") {
-    errors.push(jobs[i].id);
+    errors.push(jobs[index].id);
     continue;
   }
-  for (const failure of result.value) {
-    counts[failure] = (counts[failure] ?? 0) + 1;
+
+  for (const line of result.value) {
+    counts[line] = (counts[line] ?? 0) + 1;
   }
 }
+
 return { counts, errors };
 ```
 
