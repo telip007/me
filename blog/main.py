@@ -5,10 +5,12 @@ from __future__ import annotations
 import base64
 import hashlib
 import json
+import os
 import re
 from datetime import UTC, datetime
 from email.utils import format_datetime
 from pathlib import Path
+from urllib.parse import quote_from_bytes
 from xml.sax.saxutils import escape
 
 from fastapi import FastAPI, Request
@@ -28,6 +30,7 @@ from blog.content import (
     load_content,
     normalize_base_path,
 )
+from blog.discovery import render_catalog, render_document, render_llms, wants_markdown
 from blog.social import HEIGHT, WIDTH, card_content, card_path, page_card_path, page_cards, render_card
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -94,6 +97,9 @@ def create_app(
     store = load_content(source)
     prefix = normalize_base_path(store.config.get("basePath") if base_path is None else base_path)
     store.config["basePath"] = prefix
+    host_aliases = frozenset(
+        alias.strip().lower() for alias in os.getenv("BLOG_CANONICAL_HOST_ALIASES", "").split(",") if alias.strip()
+    ) if not static_export else frozenset()
     templates = Jinja2Templates(directory=str(ROOT / "blog" / "templates"))
     templates.env.filters["format_date"] = format_date
     asset_versions = {
@@ -143,9 +149,21 @@ def create_app(
     def absolute(path: str) -> str:
         return store.config["siteUrl"] + url(path)
 
+    def preserve_query(request: Request, target: str) -> str:
+        query = quote_from_bytes(request.scope["query_string"], safe="!$&'()*+,-./:;=?@_~%[]")
+        return target + ("?" + query if query else "")
+
     @app.middleware("http")
     async def security_headers(request: Request, call_next):
-        response = await call_next(request)
+        host = request.headers.get("host", "").partition(":")[0].lower().rstrip(".")
+        if host in host_aliases and request.url.path != url("/healthz"):
+            raw_path = quote_from_bytes(
+                request.scope.get("raw_path", b""), safe="!$&'()*+,-./:;=@_~%"
+            ) or request.url.path
+            target = store.config["siteUrl"] + raw_path
+            response = RedirectResponse(preserve_query(request, target), status_code=308)
+        else:
+            response = await call_next(request)
         response.headers["X-Content-Type-Options"] = "nosniff"
         response.headers["Referrer-Policy"] = "strict-origin-when-cross-origin"
         response.headers["X-Frame-Options"] = "DENY"
@@ -184,6 +202,14 @@ def create_app(
     ):
         localized = store.localized(lang)
         raw_alternates = alternates or {}
+        about_address = absolute(store.about[lang].url)
+        publisher = {
+            "@type": "Person",
+            "@id": about_address + "#publisher",
+            "name": localized.get("author", "") or localized.get("siteTitle", ""),
+            "url": about_address,
+        }
+        website_id = absolute(HOME[lang]) + "#website"
         data = {
             "@context": "https://schema.org",
             "@type": "WebSite",
@@ -202,8 +228,12 @@ def create_app(
             share_alt = f"{card.title} — {card.subtitle if card.home else card.identity}"
             description = card.description
             data.update({"name": title, "url": absolute(route), "description": description, "image": share_image})
-            if page_type != "home":
-                data["@type"] = "WebPage"
+            if page_type == "home":
+                data.update({"@id": website_id, "publisher": publisher})
+            else:
+                data.update({"@type": "WebPage", "isPartOf": {"@id": website_id}})
+                if absolute(route) == about_address:
+                    data.update({"@type": "AboutPage", "mainEntity": publisher})
         if page_type == "post":
             post = extra["post"]
             generated_image = not post.image
@@ -219,7 +249,9 @@ def create_app(
                 "datePublished": post.date,
                 "dateModified": post.updated,
                 "mainEntityOfPage": {"@type": "WebPage", "@id": absolute(route)},
-                "author": {"@type": "Person", "name": localized.get("author", "")},
+                "publisher": publisher,
+                "isPartOf": {"@id": website_id},
+                "keywords": post.tags,
             }
             data["image"] = share_image
             share_alt = f"{post.title} — {localized.get('siteTitle', '')}"
@@ -232,6 +264,7 @@ def create_app(
             "lang": lang,
             "page_type": page_type,
             "title": title,
+            "document_title": (localized.get("siteSubtitle") or title) if page_type == "home" else title,
             "description": description or localized.get("siteDescription", ""),
             "canonical": absolute(route),
             "alternates": {key: absolute(value) for key, value in raw_alternates.items()},
@@ -278,6 +311,20 @@ def create_app(
         }
 
     def html(request, template, data, status_code=200, headers=None):
+        headers = dict(headers or {})
+        if data["noindex"]:
+            headers["X-Robots-Tag"] = "noindex, follow"
+        if data["page_type"] == "home" and template != "_posts.html":
+            headers["Link"] = f'<{absolute("/.well-known/ai-catalog.json")}>; rel="ai-catalog"'
+        content = data.get("post") or data.get("page")
+        markdown_available = content is None or content.markdown is not None
+        if not static_export and status_code == 200 and markdown_available and data["canonical"] != absolute("/privacy/"):
+            headers["Vary"] = ", ".join(filter(None, (headers.get("Vary"), "Accept")))
+            if template != "_posts.html" and wants_markdown(request.headers.get("accept", "")):
+                headers["Link"] = ", ".join(filter(None, (
+                    headers.get("Link"), f'<{data["canonical"]}>; rel="canonical"'
+                )))
+                return Response(render_document(data, absolute), media_type="text/markdown", headers=headers)
         return templates.TemplateResponse(
             request=request, name=template, context=data, status_code=status_code, headers=headers
         )
@@ -317,26 +364,27 @@ def create_app(
         lang = "en"
         if entry is None:
             if not path.endswith("/") and path + "/" in store.routes:
-                return RedirectResponse(url(path + "/"), status_code=308)
+                return RedirectResponse(preserve_query(request, url(path + "/")), status_code=308)
             data = context(request, lang, path, LABELS[lang]["notFound"], "error", noindex=True)
             return html(request, "error.html", data, 404)
         kind, value = entry
         if kind == "redirect":
             return RedirectResponse(
-                url(value) + ("?" + request.url.query if request.url.query else ""), status_code=308
+                preserve_query(request, url(value)), status_code=308
             )
         if kind == "feed":
             return Response(render_feed(store, value, absolute), media_type="application/rss+xml")
         if kind == "sitemap":
             return Response(render_sitemap(store, absolute), media_type="application/xml")
         if kind == "llms":
-            return Response(render_llms(store, absolute), media_type="text/plain")
+            return Response(
+                render_llms(store, absolute, markdown_available=not static_export), media_type="text/plain"
+            )
         if kind == "catalog":
             return JSONResponse(render_catalog(store, absolute), media_type="application/ai-catalog+json")
         if kind == "robots":
             return Response(
-                f"User-agent: *\nAllow: /\nSitemap: {absolute('/sitemap.xml')}\n"
-                f"Agentmap: {absolute('/.well-known/ard.json')}\n", media_type="text/plain"
+                f"User-agent: *\nAllow: /\nSitemap: {absolute('/sitemap.xml')}\n", media_type="text/plain"
             )
         if kind == "tags":
             data = context(request, "en", path, "Topics", "tag_index")
@@ -430,55 +478,16 @@ def create_app(
     return app
 
 
-def render_llms(store: ContentStore, absolute) -> str:
-    # Escape Markdown labels and keep each entry on one line; never read draft sources here.
-    def label(value):
-        return re.sub(r"([\\`*{}\[\]<>])", r"\\\1", " ".join(str(value).split()))
-
-    lines = [
-        f"# {label(store.config['siteTitle'])}", "",
-        f"> {label(store.config.get('siteDescription', ''))}", "",
-        ("This English-language blog publishes articles on software and society. "
-         "The links below refer to public content; article sources are linked within each article."), "",
-        "## Site", "",
-        f"- [Writing]({absolute('/articles/')}): All public articles.",
-        f"- [Topics]({absolute('/tags/')}): Browse articles by topic.",
-        f"- [About]({absolute(store.about['en'].url)}): About this blog.",
-        f"- [RSS]({absolute('/rss.xml')}): Article feed.",
-        f"- [Sitemap]({absolute('/sitemap.xml')}): Canonical public URLs.", "",
-        "## Articles", "",
-    ]
-    lines.extend(f"- [{label(post.title)}]({absolute(post.url)}): {label(post.excerpt)}" for post in store.posts)
-    return "\n".join(lines) + "\n"
-
-
-def render_catalog(store: ContentStore, absolute) -> dict:
-    from urllib.parse import urlsplit
-
-    publisher = urlsplit(store.config["siteUrl"]).hostname
-    resources = [
-        ("overview", "Blog overview for LLMs", "text/plain", "/llms.txt"),
-        ("writing", "Writing", "text/html", "/articles/"),
-        ("feed", "Article feed", "application/rss+xml", "/rss.xml"),
-        ("sitemap", "Public sitemap", "application/xml", "/sitemap.xml"),
-    ]
-    return {
-        "specVersion": "1.0",
-        "host": {"displayName": store.config["siteTitle"]},
-        "entries": [
-            {"identifier": f"urn:air:{publisher}:blog:{key}", "displayName": name,
-             "type": media_type, "url": absolute(route)}
-            for key, name, media_type, route in resources
-        ],
-    }
-
-
 def render_sitemap(store: ContentStore, absolute) -> str:
     urls = []
     for route, (kind, value) in store.routes.items():
         if kind not in {"home", "articles", "tags", "post", "page", "tag"}:
             continue
-        urls.append(f"<url><loc>{escape(absolute(route))}</loc></url>")
+        lastmod = ""
+        if kind == "post":
+            updated = date_value(value.updated).isoformat() if "T" in value.updated else value.updated
+            lastmod = f"<lastmod>{escape(updated)}</lastmod>"
+        urls.append(f"<url><loc>{escape(absolute(route))}</loc>{lastmod}</url>")
     return (
         '<?xml version="1.0" encoding="UTF-8"?><urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">'
         + "\n".join(urls)

@@ -37,9 +37,11 @@
     table.before(wrapper);
     wrapper.append(table);
   }
-  for (const element of document.querySelectorAll('.prose pre:not(.diagram-scroll pre), .table-scroll')) {
-    const update = () => {
-      if (element.scrollWidth > element.clientWidth + 1) {
+  const scrollable = document.querySelectorAll('.prose pre:not(.diagram-scroll pre), .table-scroll');
+  const update = elements => {
+    const overflowing = Array.from(elements, element => [element, element.scrollWidth > element.clientWidth + 1]);
+    for (const [element, overflows] of overflowing) {
+      if (overflows) {
         element.tabIndex = 0;
         element.setAttribute('role', 'region');
         element.setAttribute('aria-label', 'Horizontally scrollable code or table');
@@ -48,8 +50,13 @@
         element.removeAttribute('role');
         element.removeAttribute('aria-label');
       }
-    };
-    update();
-    if ('ResizeObserver' in window) new ResizeObserver(update).observe(element);
+    }
+  };
+  if (!scrollable.length) return;
+  if ('ResizeObserver' in window) {
+    const observer = new ResizeObserver(entries => update(entries.map(entry => entry.target)));
+    for (const element of scrollable) observer.observe(element);
+  } else {
+    update(scrollable);
   }
 })();

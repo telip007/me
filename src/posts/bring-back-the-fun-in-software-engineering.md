@@ -2,6 +2,7 @@
 title: Bring back the fun in software engineering
 slug: bring-back-the-fun-in-software-engineering
 date: 2026-10-31
+updated: 2026-11-25
 lang: en
 tags: [Software engineering, AI, Agents]
 excerpt: "How to keep the problem solving and satisfaction in everyday development when an agent writes more of the code."
@@ -48,7 +49,7 @@ It could just as well be a command that opens a particular screen with known tes
 
 Now you have an interface-design problem. Does the tool accept a deployment ID, a service name, or both? How does it distinguish an unknown service from a failed deployment? How much log output should it return? What does the agent need to know to take a useful next step?
 
-Returning everything is easy. Returning enough information to diagnose the problem without burying the useful signal takes more thought. You can experiment with [tool boundaries, descriptions, and results](https://www.anthropic.com/research/writing-tools-for-agents), then check whether the agent can complete the task with what you've given it. An ambiguous error or a missing identifier gives you something concrete to investigate and improve.
+Returning everything is easy. Returning enough information to diagnose the problem without burying the useful signal takes more thought. When an agent needs to fetch and combine several results, [Code Mode can do that work before the model reads them](../when-should-you-use-code-mode/). You can experiment with [tool boundaries, descriptions, and results](https://www.anthropic.com/research/writing-tools-for-agents), then check whether the agent can complete the task with what you've given it. An ambiguous error or a missing identifier gives you something concrete to investigate and improve.
 
 You still have APIs to design, errors to handle, and code to debug. The user of some of that software happens to be an agent.
 

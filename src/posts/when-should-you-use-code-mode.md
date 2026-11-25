@@ -1,6 +1,7 @@
 ---
 title: "When should you use Code Mode?"
 date: 2026-11-24
+updated: 2026-11-25
 slug: when-should-you-use-code-mode
 lang: en
 tags: [AI, Agents, MCP]
@@ -10,7 +11,7 @@ featured: false
 
 Code Mode allows an agent to write a program that calls its tools rather than the language model having to do every single step itself. That means the LLM doesn't have to spend all its time on things that code can do quite easily.
 
-If you're using Codex, Claude Code or Pi the central question is whether it actually helps with your day to day work. It's far less important how many tools you have than what the agent actually needs to do with those tools.
+Use Code Mode when an agent can use a program to fetch, filter or combine several tool results before the model reads them. For a single call whose result the model needs to read in full, a direct tool call is usually enough. The decision depends on the work the agent needs to do with the tools.
 
 ## What changes with Code Mode?
 

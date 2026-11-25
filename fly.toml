@@ -6,6 +6,9 @@ kill_timeout = "10s"
 [build]
   dockerfile = "Dockerfile"
 
+[env]
+  BLOG_CANONICAL_HOST_ALIASES = "www.goeksu.me,goeksu-blog.fly.dev"
+
 [http_service]
   internal_port = 8000
   force_https = true

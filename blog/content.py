@@ -221,12 +221,20 @@ def highlight_code(code: str, language: str, _attributes: str) -> str:
     return highlight(code, lexer, HtmlFormatter(nowrap=True, classprefix="tok-"))
 
 
-def render_markdown(body: str, diagrams: dict[str, Diagram] | None = None) -> tuple[Markup, list[dict]]:
+def markdown_label(value: str) -> str:
+    return re.sub(r"([\\`*{}\[\]<>_#])", r"\\\1", " ".join(value.split()))
+
+
+def render_markdown(
+    body: str, diagrams: dict[str, Diagram] | None = None
+) -> tuple[Markup, list[dict], str | None]:
     md = MarkdownIt("default", {
         "html": False, "breaks": False, "linkify": True, "highlight": highlight_code,
     })
     default_fence = md.renderer.rules["fence"]
     diagram_count = 0
+    public_lines = body.replace("\r\n", "\n").replace("\r", "\n").split("\n")
+    diagram_replacements = []
 
     def render_fence(tokens, index, options, env):
         nonlocal diagram_count
@@ -239,6 +247,16 @@ def render_markdown(body: str, diagrams: dict[str, Diagram] | None = None) -> tu
         if diagrams is None or name not in diagrams:
             raise ContentError(f"Unknown terminal diagram: {name}")
         diagram = diagrams[name]
+        start, end = tokens[index].map
+        prefix = public_lines[start].partition(tokens[index].markup)[0]
+        continuation = re.sub(r"[^>\s]", " ", prefix)
+        diagram_replacements.append((start, end, [
+            f"{prefix}**{markdown_label(diagram.title)}**",
+            continuation,
+            continuation + markdown_label(diagram.caption),
+            continuation,
+            continuation + markdown_label(diagram.transcript),
+        ]))
         diagram_count += 1
         title_id = f"diagram:{name}:{diagram_count}"
         return (
@@ -273,7 +291,18 @@ def render_markdown(body: str, diagrams: dict[str, Diagram] | None = None) -> tu
         level = int(token.tag[1])
         if 2 <= level <= 3:
             toc.append({"id": unique, "title": title, "level": level})
-    return Markup(md.renderer.render(tokens, md.options, {})), toc
+    html = Markup(md.renderer.render(tokens, md.options, {}))
+    for start, end, replacement in reversed(diagram_replacements):
+        public_lines[start:end] = replacement
+    # Check for raw HTML only to select the response format. The renderer above always escapes it.
+    if "<" in body:
+        source_tokens = MarkdownIt("default", {"html": True}).parse(body)
+        for token in source_tokens:
+            if token.type == "html_block" or any(
+                child.type == "html_inline" for child in token.children or ()
+            ):
+                return html, toc, None
+    return html, toc, "\n".join(public_lines)
 
 
 @dataclass
@@ -289,6 +318,7 @@ class Post:
     html: Markup
     toc: list[dict]
     url: str
+    markdown: str | None
     translation_key: str | None = None
     image: str | None = None
     alternates: dict[str, str] = field(default_factory=dict)
@@ -309,6 +339,7 @@ class Page:
     url: str
     html: Markup
     lang: str
+    markdown: str | None
 
 
 @dataclass
@@ -363,9 +394,10 @@ def load_content(source_dir: str | Path) -> ContentStore:
 
     def page(filename, lang, route, fallback):
         metadata, body = parse_matter((source / filename).read_text())
-        html, _ = render_markdown(body)
+        html, _, markdown = render_markdown(body)
         return Page(
-            str(metadata.get("title", fallback)), str(metadata.get("description", "")), route, html, lang
+            str(metadata.get("title", fallback)), str(metadata.get("description", "")),
+            route, html, lang, markdown,
         )
 
     for lang in LANGUAGES:
@@ -426,7 +458,7 @@ def load_content(source_dir: str | Path) -> ContentStore:
         ):
             raise ContentError(f"tags must be an array of strings: {path.name}")
         post_tags = list(dict.fromkeys(tag.strip() for tag in meta.get("tags", []) if tag.strip()))
-        html, toc = render_markdown(body, load_diagrams(source / "diagrams" / post_slug))
+        html, toc, markdown = render_markdown(body, load_diagrams(source / "diagrams" / post_slug))
         plain = re.sub(r"[#>*_`~\[\]()]", " ", re.sub(r"```[\s\S]*?```", " ", body))
         post = Post(
             post_slug,
@@ -440,6 +472,7 @@ def load_content(source_dir: str | Path) -> ContentStore:
             html,
             toc,
             f"{POST_PREFIX[lang]}{post_slug}/",
+            markdown,
             image=cover_image(meta.get("image"), path.name),
         )
         add(post.url, "post", post)

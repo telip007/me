@@ -7,7 +7,7 @@
   <meta name="theme-color" content="#ffffff" media="(prefers-color-scheme: light)">
   <meta name="theme-color" content="#171717" media="(prefers-color-scheme: dark)">
   <script>{{ theme_boot|safe }}</script>
-  <title>{{ title }}{% if title != config.siteTitle %} | {{ config.siteTitle }}{% endif %}</title>
+  <title>{{ document_title }}{% if document_title != config.siteTitle %} | {{ config.siteTitle }}{% endif %}</title>
   <meta name="description" content="{{ description }}">
   <meta name="robots" content="{{ 'noindex,follow' if noindex or page_type == 'error' else 'index,follow' }}">
   <link rel="canonical" href="{{ canonical }}">
@@ -19,7 +19,7 @@
   <link rel="describedby" href="{{ llms_url }}" type="text/plain">
   <link rel="ai-catalog" href="{{ catalog_url }}" type="application/ai-catalog+json">
   <link rel="ard" href="{{ ard_url }}" type="application/ai-catalog+json">
-  {% for font in ['InriaSerif-Regular.woff2', 'InriaSerif-Bold.woff2', 'MonaspaceNeon-Regular.woff2'] %}
+  {% for font in ['InriaSerif-Regular.woff2', 'InriaSerif-Bold.woff2', 'GoeksuMono-Regular.woff2'] %}
   <link rel="preload" href="{{ asset_url('fonts/' ~ font) }}" as="font" type="font/woff2" crossorigin>
   {% endfor %}
   <style>{{ styles.site|safe }}</style>

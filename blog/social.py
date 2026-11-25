@@ -50,7 +50,7 @@ def page_cards(store: ContentStore) -> dict[str, PageCard]:
             cards[route] = PageCard(identity, description, identity, host, True, config.get("siteSubtitle", ""))
             continue
         elif kind == "articles":
-            title, detail = "Writing", description
+            title, detail = "Writing", config.get("articlesDescription") or f"Browse articles by {identity}."
         elif kind == "tags":
             title, detail = "Topics", "Explore the writing by topic. " + description
         elif kind == "tag":

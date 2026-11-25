@@ -23,6 +23,14 @@
 }
 
 @font-face {
+  font-family: "Goeksu Mono";
+  src: url('fonts/GoeksuMono-Regular.woff2') format("woff2");
+  font-weight: 400;
+  font-display: optional;
+  unicode-range: U+0000-024F, U+1E00-1EFF, U+2000-209F, U+20A0-20CF, U+2190-21FF, U+2300-23FF, U+2500-25FF;
+}
+
+@font-face {
   font-family: "Monaspace Neon";
   src: url('fonts/MonaspaceNeon-Regular.woff2') format("woff2");
   font-weight: 400;
@@ -31,7 +39,7 @@
 
 :root {
   --serif: "Inria Serif", Georgia, "Times New Roman", serif;
-  --mono: "Monaspace Neon", ui-monospace, Menlo, Consolas, monospace;
+  --mono: "Goeksu Mono", "Monaspace Neon", ui-monospace, Menlo, Consolas, monospace;
   --paper: #fff;
   --ink: #202020;
   --muted: #595959;

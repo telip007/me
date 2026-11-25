@@ -647,6 +647,7 @@ def test_discovery_is_public_only_and_exportable(source, tmp_path):
     assert llms.status_code == 200
     assert llms.headers["content-type"].startswith("text/plain")
     assert llms.text.startswith("# Example\n")
+    assert "Accept: text/markdown" in llms.text
     assert "https://example.test/me/articles/visible/" in llms.text
     assert "https://example.test/me/about/" in llms.text
     for route in ["/.well-known/ai-catalog.json", "/.well-known/ard.json"]:
@@ -659,6 +660,7 @@ def test_discovery_is_public_only_and_exportable(source, tmp_path):
             resource = client.get(urlsplit(entry["url"]).path)
             assert resource.status_code == 200
             assert resource.headers["content-type"].split(";")[0] == entry["type"]
+            assert 2 <= len(entry["representativeQueries"]) <= 5
         assert client.head("/me" + route).status_code == 200
         assert not client.head("/me" + route).content
         for private in ["secret", "geheim", "PRIVATE_MARKER", "GERMAN_MARKER"]:
@@ -666,9 +668,11 @@ def test_discovery_is_public_only_and_exportable(source, tmp_path):
     page = client.get("/me/").text
     assert 'rel="describedby"' in page and 'href="/me/llms.txt"' in page
     assert 'rel="ai-catalog"' in page and 'rel="ard"' in page
-    assert "Agentmap: https://example.test/me/.well-known/ard.json" in client.get("/me/robots.txt").text
+    robots = client.get("/me/robots.txt").text
+    assert "Sitemap: https://example.test/me/sitemap.xml" in robots
+    assert "Agentmap:" not in robots
     output = export_site(source, tmp_path / "out")
-    assert (output / "llms.txt").is_file()
+    assert "Accept: text/markdown" not in (output / "llms.txt").read_text()
     assert json.loads((output / ".well-known/ai-catalog.json").read_text())["entries"]
     assert (output / ".well-known/ard.json").is_file()
     for file in [output / "llms.txt", output / ".well-known/ai-catalog.json"]:
@@ -783,6 +787,93 @@ def test_terminal_diagrams_are_scoped_validated_and_escaped(source):
     assert "Flow &amp; scope" in rendered and "&lt;caption&gt;" in rendered
     assert "&lt;script&gt;" in rendered and "│&lt;&amp;&gt;│" in rendered
     assert '<code class="language-text">ordinary' in rendered
+    response = TestClient(create_app(source_dir=source)).get(
+        "/articles/models/", headers={"Accept": "text/markdown"}
+    )
+    assert "Flow & scope" in response.text and r"\<caption\>" in response.text
+    assert r"\<script\>" in response.text and "```text\nordinary\n```" in response.text
+    assert "terminal-diagram flow" not in response.text
     post(source, name="other", meta="slug: other", body="```terminal-diagram flow\n```\n")
     with pytest.raises(ContentError, match="Unknown terminal diagram.*flow"):
         load_content(source)
+
+
+def test_alternate_hosts_and_missing_slash_preserve_query(source, monkeypatch):
+    monkeypatch.setenv("BLOG_CANONICAL_HOST_ALIASES", "www.example.test, example.fly.dev")
+    client = TestClient(create_app(source_dir=source))
+    for host in ("www.example.test", "example.fly.dev"):
+        response = client.get(
+            f"https://{host}/articles/?q=hello%2Bworld&tag=LLM", follow_redirects=False
+        )
+        assert response.status_code == 308
+        assert response.headers["location"] == "https://example.test/articles/?q=hello%2Bworld&tag=LLM"
+        assert client.get(f"https://{host}/healthz").status_code == 200
+    response = client.get("/articles?q=hello%2Bworld", follow_redirects=False)
+    assert response.status_code == 308
+    assert response.headers["location"] == "/articles/?q=hello%2Bworld"
+
+
+def test_distinct_page_metadata_and_real_article_lastmod(source):
+    post(source, meta="slug: visible\nupdated: 2026-02-02")
+    client = TestClient(create_app(source_dir=source))
+    home = client.get("/").text
+    writing = client.get("/articles/").text
+    assert "<title>Building with AI | Example</title>" in home
+    pattern = r'<meta name="description" content="([^"]+)"'
+    assert re.search(pattern, home)[1] != re.search(pattern, writing)[1]
+    assert "<loc>https://example.test/articles/visible/</loc><lastmod>2026-02-02</lastmod>" in (
+        client.get("/sitemap.xml").text
+    )
+    article = client.get("/articles/visible/").text
+    schema = json.loads(re.search(r'application/ld\+json">(.*?)</script>', article, re.DOTALL)[1])
+    assert schema["publisher"]["@id"] == "https://example.test/about/#publisher"
+    about = client.get("/about/").text
+    schema = json.loads(re.search(r'application/ld\+json">(.*?)</script>', about, re.DOTALL)[1])
+    assert schema["mainEntity"]["@id"] == "https://example.test/about/#publisher"
+
+
+def test_markdown_negotiation_reuses_public_content(source):
+    post(
+        source,
+        meta='slug: visible\nexcerpt: "A public summary"\ninternalNote: PRIVATE_METADATA',
+        body="    indented code\n\n## A public heading\n\n[Source](https://example.org/docs)\n",
+    )
+    post(source, "secret", "draft: true", "PRIVATE_DRAFT")
+    post(source, "german", "lang: de", "PRIVATE_GERMAN")
+    client = TestClient(create_app(source_dir=source, base_path="/me"))
+    route = "/me/articles/visible/"
+    response = client.get(route, headers={"Accept": "text/markdown, text/html;q=0.2"})
+    assert response.headers["content-type"] == "text/markdown; charset=utf-8"
+    assert "accept" in response.headers["vary"].lower()
+    assert response.headers["link"] == '<https://example.test/me/articles/visible/>; rel="canonical"'
+    assert response.text.startswith("# english\n")
+    assert "A public summary" in response.text
+    assert "\n    indented code\n" in response.text
+    assert "## A public heading" in response.text
+    assert "[Source](https://example.org/docs)" in response.text
+    assert "PRIVATE_METADATA" not in response.text
+    for accept in ("*/*", "text/html, text/markdown;q=0.1", "text/markdown;q=0, */*"):
+        html = client.get(route, headers={"Accept": accept})
+        assert html.headers["content-type"].startswith("text/html")
+        assert "accept" in html.headers["vary"].lower()
+    for public in ("/", "/articles/", "/about/", "/tags/", "/tags/llm/"):
+        markdown = client.get("/me" + public, headers={"Accept": "text/markdown"})
+        assert markdown.headers["content-type"].startswith("text/markdown")
+        assert "PRIVATE_" not in markdown.text
+    for excluded in ("/articles/secret/", "/articles/german/"):
+        assert client.get("/me" + excluded, headers={"Accept": "text/markdown"}).status_code == 404
+    head = client.head(route, headers={"Accept": "text/markdown"})
+    assert head.headers["content-type"] == response.headers["content-type"]
+    assert not head.content
+    partial = client.get("/me/articles/?q=english", headers={"Accept": "text/markdown", "HX-Request": "true"})
+    assert partial.headers["content-type"].startswith("text/html")
+    assert "HX-History-Restore-Request" in partial.headers["vary"]
+
+
+
+def test_markdown_delivery_falls_back_to_escaped_html_for_raw_markup(source):
+    post(source, meta="slug: markup", body="A <b>literal tag</b> in prose.\n")
+    client = TestClient(create_app(source_dir=source))
+    response = client.get("/articles/markup/", headers={"Accept": "text/markdown"})
+    assert response.headers["content-type"].startswith("text/html")
+    assert "&lt;b&gt;literal tag&lt;/b&gt;" in response.text

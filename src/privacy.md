@@ -13,13 +13,13 @@ Talip Göksu is responsible for this website. For privacy requests, contact [tal
 
 ## Hosting and connection data
 
-This website is hosted by Fly.io, Inc., a US provider. The application runs in Frankfurt, Germany. Fly.io’s global network handles incoming connections and terminates HTTPS at an edge location; selecting Frankfurt does not restrict all processing to Germany or the EU.
+This website is hosted by [Fly.io](https://fly.io/), Inc., a US provider. The application runs in Frankfurt, Germany. Fly\.io’s global network handles incoming connections and terminates HTTPS at an edge location; selecting Frankfurt does not restrict all processing to Germany or the EU.
 
 When you visit a page or fetch the RSS feed, your IP address and technical request data must be processed to deliver the response. This includes the requested address, connection time and HTTP headers supplied by your browser. The purpose is to provide the website reliably and protect it against misuse. The legal basis is Article 6(1)(f) GDPR: the legitimate interest in operating a secure, accessible website.
 
-The application has no visitor database and routine HTTP access logging is disabled. Fly.io may retain operational and error logs, including requested paths on proxy errors. Fly.io states that application logs remain searchable for seven days and inbound visitor IP addresses are not retained in its log store. No additional log export or analytics service is configured.
+The application has no visitor database and routine HTTP access logging is disabled. Fly\.io may retain operational and error logs, including requested paths on proxy errors. Fly\.io states that application logs remain searchable for seven days and inbound visitor IP addresses are not retained in its log store. No additional log export or analytics service is configured.
 
-Fly.io is certified under the EU–US Data Privacy Framework. Its infrastructure, operations and subprocessors can involve processing outside the EU. See its [data protection information](https://fly.io/legal/security-questionnaire/#compliance-privacy-data-protection-and-contracting), [privacy statement](https://fly.io/legal/privacy-policy/) and [subprocessor list](https://fly.io/legal/sub-processors/) for details.
+Fly\.io is certified under the EU–US Data Privacy Framework. Its infrastructure, operations and subprocessors can involve processing outside the EU. See its [data protection information](https://fly.io/legal/security-questionnaire/#compliance-privacy-data-protection-and-contracting), [privacy statement](https://fly.io/legal/privacy-policy/) and [subprocessor list](https://fly.io/legal/sub-processors/) for details.
 
 ## Cookies, tracking and browser storage
 
