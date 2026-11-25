@@ -2,6 +2,7 @@ import base64
 import hashlib
 import json
 import re
+from html import unescape
 from io import BytesIO
 from pathlib import Path
 from unicodedata import normalize
@@ -749,6 +750,23 @@ def test_favicon_family_and_export_under_base_path(source, tmp_path):
             assert Image.open(BytesIO(response.content)).size == (180, 180)
         if name == "favicon.ico":
             assert Image.open(BytesIO(response.content)).ico.sizes() == {(16, 16), (32, 32), (48, 48)}
+
+
+def test_code_fences_highlight_known_languages_and_keep_code_as_text(source):
+    snippet = '\nconst label = "<script>";\n  return label;\n\n'
+    plain = "<script>&\n"
+    post(
+        source,
+        meta="slug: example",
+        body=f"```javascript\n{snippet}```\n\n```unknown-lexer\n{plain}```\n\n```\n{plain}```\n",
+    )
+    rendered = TestClient(create_app(source_dir=source)).get("/articles/example/").text
+    highlighted, fallback, unmarked = re.findall(r"<pre><code[^>]*>(.*?)</code></pre>", rendered, re.DOTALL)
+    assert re.search(r"<span[^>]+>const</span>", highlighted)
+    assert re.search(r"<span[^>]+>[^<]*&lt;script&gt;[^<]*</span>", highlighted)
+    assert unescape(re.sub(r"</?span[^>]*>", "", highlighted)) == snippet
+    assert "<script>" not in highlighted
+    assert fallback == unmarked == "&lt;script&gt;&amp;\n"
 
 
 def test_terminal_diagrams_are_scoped_validated_and_escaped(source):

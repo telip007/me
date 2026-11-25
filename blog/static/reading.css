@@ -50,6 +50,25 @@ summary:hover {
 
 .prose code { font-size: .875em; }
 
+.prose pre:has(> code) {
+  margin-block: 1.25rem;
+  padding: .8rem clamp(.5rem, 2.5vw, 1rem);
+  background-color: color-mix(in srgb, var(--paper), var(--mark) 45%);
+  font-size: 1rem;
+  line-height: 1.55;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  text-indent: 2ch hanging each-line;
+}
+
+.prose pre > code { font-size: inherit; }
+
+.prose pre > code [class^="tok-k"] { color: light-dark(#67427e, #c8b5df); }
+.prose pre > code [class^="tok-s"] { color: light-dark(#3e612d, #a9c48a); }
+.prose pre > code :is([class^="tok-m"], .tok-il, .tok-kc) { color: light-dark(#825118, #deb280); }
+.prose pre > code :is(.tok-nb, .tok-bp) { color: light-dark(#305f7d, #a6c5dd); }
+.prose pre > code [class^="tok-c"] { color: var(--muted); }
+
 .diagram {
   min-inline-size: 0;
   margin: 1.8rem 0 1.65rem;
@@ -195,5 +214,7 @@ summary:hover {
 
 @media print {
   :root, :root[data-theme] { background: white; color: black; }
+  .prose pre:has(> code) { background: none; }
+  .prose pre > code [class^="tok-"] { color: inherit; }
   :is(.reading-progress, .reading-nav, .colophon, .end, .skip-link) { display: none; }
 }

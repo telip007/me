@@ -21,6 +21,10 @@ import idna
 import yaml
 from markdown_it import MarkdownIt
 from markupsafe import Markup
+from pygments import highlight
+from pygments.formatters import HtmlFormatter
+from pygments.lexers import get_lexer_by_name
+from pygments.util import ClassNotFound
 
 LANGUAGES = ("en",)
 HOME = {"en": "/"}
@@ -207,8 +211,20 @@ def load_diagrams(directory: Path) -> dict[str, Diagram]:
     return diagrams
 
 
+def highlight_code(code: str, language: str, _attributes: str) -> str:
+    if not language:
+        return ""
+    try:
+        lexer = get_lexer_by_name(language, stripnl=False, ensurenl=False)
+    except ClassNotFound:
+        return ""  # MarkdownIt escapes the original text when highlighting is unavailable.
+    return highlight(code, lexer, HtmlFormatter(nowrap=True, classprefix="tok-"))
+
+
 def render_markdown(body: str, diagrams: dict[str, Diagram] | None = None) -> tuple[Markup, list[dict]]:
-    md = MarkdownIt("default", {"html": False, "breaks": False, "linkify": True})
+    md = MarkdownIt("default", {
+        "html": False, "breaks": False, "linkify": True, "highlight": highlight_code,
+    })
     default_fence = md.renderer.rules["fence"]
     diagram_count = 0
 
