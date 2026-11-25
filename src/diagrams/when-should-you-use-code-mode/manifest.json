@@ -1,0 +1,12 @@
+{
+  "direct-tool-calls": {
+    "title": "Direct tool calls",
+    "caption": "The model receives the logs and counts the failures.",
+    "transcript": "The model asks the tools to list failed jobs and receives their IDs. It requests the logs for those jobs, receives the raw logs, then extracts and counts the failures."
+  },
+  "code-mode": {
+    "title": "Tool calls through Code Mode",
+    "caption": "The program processes the logs and returns the counts and errors.",
+    "transcript": "The model generates a program. The program asks the tools to list failed jobs, receives their IDs, requests the logs for those jobs, and receives the raw logs. It extracts and counts the failures, then returns the counts and retrieval errors to the model."
+  }
+}
